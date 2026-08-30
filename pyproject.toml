@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dragonscript"
+version = "1.0.0"
+description = "Un lenguaje de programación interpretado e inspirado en Dragon Ball"
+readme = "README.md"
+authors = [
+    { name = "Agustín Suárez" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+dragonscript = "dragonscript.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]

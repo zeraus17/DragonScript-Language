@@ -1,0 +1,5 @@
+TECHNIQUE test() {
+    SCOUTER("hello")
+}
+
+test()

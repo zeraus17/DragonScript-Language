@@ -1,0 +1,62 @@
+{
+    "files.associations": {
+        "*.ds": "dragonscript"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.pyc": true,
+        "**/.pytest_cache": true
+    },
+    "terminal.integrated.cwd": "${workspaceFolder}",
+    "python.testing.unittestEnabled": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "[dragonscript]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.autoIndent": "full",
+        "editor.formatOnSave": false
+    },
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": "keyword.control.dragonscript",
+                "settings": {
+                    "foreground": "#FF9800",
+                    "fontStyle": "bold"
+                }
+            },
+            {
+                "scope": "keyword.other.dragonscript",
+                "settings": {
+                    "foreground": "#F44336",
+                    "fontStyle": "bold"
+                }
+            },
+            {
+                "scope": "string.quoted.double.dragonscript",
+                "settings": {
+                    "foreground": "#4CAF50"
+                }
+            },
+            {
+                "scope": "constant.numeric.dragonscript",
+                "settings": {
+                    "foreground": "#2196F3"
+                }
+            },
+            {
+                "scope": "comment.line.dragonscript",
+                "settings": {
+                    "foreground": "#9E9E9E",
+                    "fontStyle": "italic"
+                }
+            }
+        ]
+    }
+}

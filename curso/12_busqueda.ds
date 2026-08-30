@@ -1,0 +1,46 @@
+# =====================================================================
+# LECCION 12 - BUSQUEDA
+# =====================================================================
+# BUSCAR es recorrer un grupo para encontrar un elemento que cumple
+# cierta condicion. Hay dos situaciones clasicas:
+#
+#   A) SABIENDO que esta: tenemos la certeza de que existe, solo
+#      queremos ubicarlo o quedarnos con el.
+#   B) SIN SABER si esta: puede que exista o no, asi que ademas hay que
+#      informar si se encontro (usamos un booleano "encontrado").
+# =====================================================================
+
+KI guerreros = ["Krillin", "Goku", "Piccolo", "Vegeta"]
+
+# ------------------------------------------------------------------
+# CASO A: sabiendo que esta. Buscamos el primer nombre que empieza
+# con "G". Como el enunciado nos asegura que existe, apenas lo hallamos
+# lo guardamos.
+# ------------------------------------------------------------------
+KI elegido = VACIO
+RASTREAR g EN guerreros {
+    SENSAR g[0] == "G" FUSION elegido == VACIO {
+        elegido = g
+    }
+}
+SCOUTER "Primer guerrero con G: " + elegido
+
+# ------------------------------------------------------------------
+# CASO B: sin saber si esta. Buscamos si hay algun guerrero llamado
+# "Freezer". Usamos un booleano que arranca en RELLENO (falso) y se
+# vuelve CANON (verdadero) solo si lo encontramos.
+# ------------------------------------------------------------------
+# CONTRATO: estaPresente(lista, nombre)
+#   Proposito: devuelve CANON si 'nombre' aparece en 'lista', si no RELLENO.
+TECNICA estaPresente(lista, nombre) {
+    KI encontrado = RELLENO
+    RASTREAR x EN lista {
+        SENSAR x == nombre {
+            encontrado = CANON
+        }
+    }
+    TRANSMITIR encontrado
+}
+
+SCOUTER "Esta Vegeta?  " + estaPresente(guerreros, "Vegeta")
+SCOUTER "Esta Freezer? " + estaPresente(guerreros, "Freezer")

@@ -1,0 +1,35 @@
+# =====================================================================
+# LECCION 05 - EXPRESIONES Y TIPOS
+# =====================================================================
+# Una EXPRESION es algo que la computadora evalua para obtener un VALOR.
+# Cada valor tiene un TIPO. En DragonScript los tipos basicos son:
+#
+#   * Numeros:   9000, 3, 2.5
+#   * Textos:    "Kamehameha"   (siempre entre comillas)
+#   * Booleanos: CANON (verdadero) y RELLENO (falso)
+#   * Nulo:      VACIO (ausencia de valor)
+# =====================================================================
+
+SCOUTER "--- Numeros y aritmetica ---"
+SCOUTER 100 + 50        # suma
+SCOUTER 100 - 30        # resta
+SCOUTER 6 * 7           # multiplicacion
+SCOUTER 100 / 4         # division
+SCOUTER 10 % 3          # resto (modulo)
+
+SCOUTER "--- Textos ---"
+SCOUTER "Son" + "Goku"          # se unen (concatenacion)
+SCOUTER "Poder: " + 9000        # texto + numero -> texto
+
+SCOUTER "--- Booleanos (comparaciones) ---"
+SCOUTER 9000 > 8000     # TRUE
+SCOUTER 5 == 5          # TRUE
+SCOUTER 3 < 1           # FALSE
+
+SCOUTER "--- Operadores logicos ---"
+SCOUTER CANON FUSION RELLENO    # Y (and): TRUE y FALSE -> FALSE
+SCOUTER CANON DESEO RELLENO     # O (or):  TRUE o FALSE  -> TRUE
+SCOUTER INVERTIR CANON          # NO (not): lo contrario de TRUE -> FALSE
+
+SCOUTER "--- Valor nulo ---"
+SCOUTER VACIO

@@ -1,0 +1,65 @@
+# 🔍 Análisis de Niveles de Poder - PLANTILLA
+# Completa cada función usando RASTREAR
+
+# ============================================
+# 1. SUMAR PODERES
+# ============================================
+TECNICA sumarPoderes(poderes) {
+    # TODO: Crear variable KI suma = 0
+    # TODO: RASTREAR cada poder EN poderes
+    # TODO: Sumar cada poder a la variable suma
+    # TODO: TRANSMITIR suma
+}
+
+# ============================================
+# 2. CONTAR FUERTES
+# ============================================
+TECNICA contarFuertes(poderes, minimo) {
+    # TODO: Crear variable KI contador = 0
+    # TODO: RASTREAR cada poder EN poderes
+    # TODO: SENSAR poder >= minimo, incrementar contador
+    # TODO: TRANSMITIR contador
+}
+
+# ============================================
+# 3. ENCONTRAR MÁXIMO
+# ============================================
+TECNICA encontrarMaximo(poderes) {
+    # TODO: Crear variable KI maximo = CABEZA(poderes)
+    # TODO: RASTREAR cada poder EN poderes
+    # TODO: SENSAR poder > maximo, actualizar maximo
+    # TODO: TRANSMITIR maximo
+}
+
+# ============================================
+# 4. MOSTRAR TODOS
+# ============================================
+TECNICA mostrarTodos(poderes) {
+    # TODO: Crear variable KI posicion = 1
+    # TODO: RASTREAR cada poder EN poderes
+    # TODO: SCOUTER "Guerrero " + posicion + ": " + poder
+    # TODO: Incrementar posicion
+}
+
+# ============================================
+# 5. DUPLICAR PODERES
+# ============================================
+TECNICA duplicarPoderes(poderes) {
+    # TODO: Crear lista vacía KI resultado = []
+    # TODO: RASTREAR cada poder EN poderes
+    # TODO: ABSORBER(resultado, poder * 2)
+    # TODO: TRANSMITIR resultado
+}
+
+# ============================================
+# PROGRAMA PRINCIPAL
+# ============================================
+
+SCOUTER("🔍 ANÁLISIS DE NIVELES DE PODER 🔍")
+SCOUTER("")
+
+KI poderes = [9000, 8500, 7000, 4500, 10000]
+
+# TODO: Probar cada función
+# SCOUTER("Suma total: " + STR(sumarPoderes(poderes)))
+# ... etc

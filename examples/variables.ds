@@ -1,0 +1,11 @@
+# Variables y operaciones básicas
+KI power = 9000
+KI nombre = "Goku"
+KI es_saiyan = TRUE
+
+SCOUTER power
+SCOUTER nombre
+SCOUTER es_saiyan
+
+KI resultado = power * 2
+SCOUTER resultado

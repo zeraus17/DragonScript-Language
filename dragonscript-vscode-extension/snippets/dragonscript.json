@@ -1,0 +1,186 @@
+{
+    "Variable Declaration": {
+        "prefix": "ki",
+        "body": [
+            "KI ${1:nombre} = ${2:valor}"
+        ],
+        "description": "Declarar una variable con KI"
+    },
+    "Print": {
+        "prefix": "scouter",
+        "body": [
+            "SCOUTER ${1:expresion}"
+        ],
+        "description": "Mostrar valor con SCOUTER"
+    },
+    "Input": {
+        "prefix": "input",
+        "body": [
+            "KI ${1:variable} = INPUT(\"${2:mensaje}: \")"
+        ],
+        "description": "Leer entrada del usuario con INPUT"
+    },
+    "Condicional (SENSAR)": {
+        "prefix": "sensar",
+        "body": [
+            "SENSAR ${1:condicion} {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Condicional SENSAR (if)"
+    },
+    "Condicional con alternativa (SENSAR/ESQUIVAR)": {
+        "prefix": "sensaresquivar",
+        "body": [
+            "SENSAR ${1:condicion} {",
+            "\t${2:# código}",
+            "} ESQUIVAR {",
+            "\t${3:# código}",
+            "}"
+        ],
+        "description": "Condicional SENSAR-ESQUIVAR (if-else)"
+    },
+    "Repeticion condicional (ENTRENAR)": {
+        "prefix": "entrenar",
+        "body": [
+            "ENTRENAR ${1:condicion} {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Bucle ENTRENAR (while)"
+    },
+    "Repeticion simple (GRAVEDAD)": {
+        "prefix": "gravedad",
+        "body": [
+            "GRAVEDAD ${1:repeticiones} {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Bucle GRAVEDAD (repite N veces)"
+    },
+    "Recorrido (RASTREAR)": {
+        "prefix": "rastrear",
+        "body": [
+            "RASTREAR ${1:elemento} EN ${2:grupo} {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Recorrido RASTREAR ... EN ... (foreach)"
+    },
+    "Rango": {
+        "prefix": "rango",
+        "body": [
+            "[${1:1}..${2:10}]"
+        ],
+        "description": "Rango de enteros [inicio..fin]"
+    },
+    "Funcion (TECNICA)": {
+        "prefix": "tecnica",
+        "body": [
+            "TECNICA ${1:nombre}(${2:parametros}) {",
+            "\t$0",
+            "\tTRANSMITIR ${3:valor}",
+            "}"
+        ],
+        "description": "Declarar una función (TECNICA)"
+    },
+    "Function Call": {
+        "prefix": "call",
+        "body": [
+            "${1:nombre}(${2:argumentos})"
+        ],
+        "description": "Llamar una función"
+    },
+    "Comment": {
+        "prefix": "#",
+        "body": [
+            "# $0"
+        ],
+        "description": "Comentario de línea"
+    },
+    "Registro / Clase (CAPSULA)": {
+        "prefix": "capsula",
+        "body": [
+            "CAPSULA ${1:Nombre} {",
+            "\tTECNICA __init__(${2:params}) {",
+            "\t\tYO.${3:campo} = ${4:valor}",
+            "\t}",
+            "\t$0",
+            "}"
+        ],
+        "description": "Declarar un registro/clase (CAPSULA) con constructor"
+    },
+    "Herencia (EVOLUCIONA)": {
+        "prefix": "evoluciona",
+        "body": [
+            "CAPSULA ${1:Nombre} EVOLUCIONA ${2:Padre} {",
+            "\tTECNICA __init__(${3:params}) {",
+            "\t\t${2:Padre}.__init__(YO, ${4:args})",
+            "\t\t$0",
+            "\t}",
+            "}"
+        ],
+        "description": "Declarar un guerrero que hereda con EVOLUCIONA"
+    },
+    "Constructor (__init__)": {
+        "prefix": "init",
+        "body": [
+            "TECNICA __init__(${1:params}) {",
+            "\tYO.${2:campo} = ${3:valor}$0",
+            "}"
+        ],
+        "description": "Constructor de un registro/clase"
+    },
+    "Metodo": {
+        "prefix": "metodo",
+        "body": [
+            "TECNICA ${1:nombre}(${2:params}) {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Método de instancia"
+    },
+    "Metodo estatico (LEGENDARIO)": {
+        "prefix": "legendario",
+        "body": [
+            "LEGENDARIO TECNICA ${1:nombre}(${2:params}) {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Método estático (LEGENDARIO)"
+    },
+    "Crear objeto (ACTIVAR)": {
+        "prefix": "activar",
+        "body": [
+            "KI ${1:objeto} = ACTIVAR ${2:Capsula}(${3:args})"
+        ],
+        "description": "Crear un registro/objeto con ACTIVAR"
+    },
+    "Lista": {
+        "prefix": "lista",
+        "body": [
+            "KI ${1:nombre} = [${2:elementos}]"
+        ],
+        "description": "Declarar una lista"
+    },
+    "Tablero (iniciar y mostrar)": {
+        "prefix": "tablero",
+        "body": [
+            "INICIAR_TABLERO(${1:4}, ${2:3})",
+            "$0",
+            "MOSTRAR_TABLERO()"
+        ],
+        "description": "Iniciar un tablero y mostrarlo"
+    },
+    "Recorrer fila del tablero": {
+        "prefix": "recorrerfila",
+        "body": [
+            "${1:sembrar}()",
+            "ENTRENAR (PUEDE_VOLAR(ESTE)) {",
+            "\tVOLAR(ESTE)",
+            "\t${1:sembrar}()",
+            "}"
+        ],
+        "description": "Recorrer una fila del tablero de oeste a este"
+    }
+}

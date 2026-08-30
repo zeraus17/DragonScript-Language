@@ -1,0 +1,158 @@
+# 🥋 Torneo de Artes Marciales - SOLUCIÓN COMPLETA
+# ¡No mires hasta haber intentado el ejercicio! 😄
+
+# ============================================
+# DEFINIR CLASE CAPSULA
+# ============================================
+CAPSULA Participante {
+    TECNICA __init__(nombre, poder, raza) {
+        YO.nombre = nombre
+        YO.poder = poder
+        YO.raza = raza
+        YO.victorias = 0
+    }
+}
+
+# ============================================
+# 1. REGISTRAR CAPSULA
+# ============================================
+TECNICA registrarGuerrero(nombre, poder, raza) {
+    TRANSMITIR ACTIVAR Participante(nombre, poder, raza)
+}
+
+# ============================================
+# 2. MOSTRAR CAPSULA
+# ============================================
+TECNICA mostrarGuerrero(guerrero) {
+    SCOUTER("=== " + guerrero.nombre + " ===")
+    SCOUTER("Poder: " + STR(guerrero.poder))
+    SCOUTER("Raza: " + guerrero.raza)
+    SCOUTER("Victorias: " + STR(guerrero.victorias))
+    SCOUTER("")
+}
+
+# ============================================
+# 3. CAPSULA MÁS FUERTE
+# ============================================
+TECNICA guerreroMasFuerte(guerreros) {
+    KI masFuerte = CABEZA(guerreros)
+    
+    RASTREAR g EN guerreros {
+        SENSAR (g.poder > masFuerte.poder) {
+            masFuerte = g
+        }
+    }
+    
+    TRANSMITIR masFuerte
+}
+
+# ============================================
+# 4. FILTRAR POR PODER MÍNIMO
+# ============================================
+TECNICA filtrarPorPoderMinimo(guerreros, minimo) {
+    KI resultado = []
+    
+    RASTREAR g EN guerreros {
+        SENSAR (g.poder >= minimo) {
+            resultado = ABSORBER(resultado, g)
+        }
+    }
+    
+    TRANSMITIR resultado
+}
+
+# ============================================
+# 5. PROMEDIO DE PODER
+# ============================================
+TECNICA promedioPoderTotal(guerreros) {
+    KI suma = 0
+    
+    RASTREAR g EN guerreros {
+        suma = suma + g.poder
+    }
+    
+    KI promedio = suma / LONGITUD(guerreros)
+    TRANSMITIR promedio
+}
+
+# ============================================
+# 6. SIMULAR COMBATE
+# ============================================
+TECNICA simularCombate(g1, g2) {
+    SCOUTER("⚔️  " + g1.nombre + " vs " + g2.nombre)
+    
+    KI ganador = VACIO
+    
+    SENSAR (g1.poder > g2.poder) {
+        g1.victorias = g1.victorias + 1
+        ganador = g1
+        SCOUTER("   ¡" + g1.nombre + " gana!")
+    } ESQUIVAR {
+        g2.victorias = g2.victorias + 1
+        ganador = g2
+        SCOUTER("   ¡" + g2.nombre + " gana!")
+    }
+    
+    SCOUTER("")
+    TRANSMITIR ganador
+}
+
+# ============================================
+# PROGRAMA PRINCIPAL
+# ============================================
+
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+SCOUTER("🥋 TORNEO DE ARTES MARCIALES 🥋")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+SCOUTER("")
+
+# Crear guerreros
+KI goku = registrarGuerrero("GOKU", 9000, "Saiyajin")
+KI vegeta = registrarGuerrero("VEGETA", 8500, "Saiyajin")
+KI piccolo = registrarGuerrero("PICCOLO", 7000, "Namekiano")
+KI krilin = registrarGuerrero("KRILIN", 4500, "Humano")
+KI freezer = registrarGuerrero("FREEZER", 10000, "Raza de Freezer")
+
+KI guerreros = [goku, vegeta, piccolo, krilin, freezer]
+
+# Mostrar inscritos
+SCOUTER("📋 Guerreros Inscritos:")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+RASTREAR g EN guerreros {
+    mostrarGuerrero(g)
+}
+
+# Guerrero más fuerte
+KI campeón = guerreroMasFuerte(guerreros)
+SCOUTER("🏆 Guerrero más fuerte: " + campeón.nombre + " (Poder: " + STR(campeón.poder) + ")")
+SCOUTER("")
+
+# Filtrar elite
+SCOUTER("💪 Guerreros Elite (Poder >= 5000):")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+KI elite = filtrarPorPoderMinimo(guerreros, 5000)
+RASTREAR g EN elite {
+    mostrarGuerrero(g)
+}
+
+# Promedio
+KI promedio = promedioPoderTotal(guerreros)
+SCOUTER("📊 Promedio de poder del torneo: " + STR(promedio))
+SCOUTER("")
+
+# Combates
+SCOUTER("⚔️  RONDA DE COMBATES")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+simularCombate(goku, vegeta)
+simularCombate(freezer, piccolo)
+simularCombate(goku, freezer)
+
+# Estado final
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+SCOUTER("📊 ESTADO FINAL DEL TORNEO")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+RASTREAR g EN guerreros {
+    mostrarGuerrero(g)
+}
+
+SCOUTER("¡Torneo finalizado! 🐉")

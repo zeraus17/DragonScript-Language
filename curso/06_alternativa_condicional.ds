@@ -1,0 +1,42 @@
+# =====================================================================
+# LECCION 06 - ALTERNATIVA CONDICIONAL
+# =====================================================================
+# Muchas veces el programa debe DECIDIR entre distintos caminos segun
+# una condicion. Para eso usamos SENSAR (sensar el poder con el scouter):
+#
+#     SENSAR <condicion> {
+#         ... si la condicion es verdadera ...
+#     } ESQUIVAR {
+#         ... si es falsa ...
+#     }
+#
+# Podemos encadenar varias condiciones con ESQUIVAR SENSAR.
+# =====================================================================
+
+# CONTRATO: clasificar(poder)
+#   Proposito: dice el nivel de un guerrero segun su poder de pelea.
+#   Parametro: poder (numero).
+TECNICA clasificar(poder) {
+    SCOUTER "Poder medido: " + poder
+    SENSAR poder > 9000 {
+        SCOUTER "  -> Es un monstruo! Supera los 9000!"
+    } ESQUIVAR SENSAR poder > 1000 {
+        SCOUTER "  -> Guerrero de elite"
+    } ESQUIVAR SENSAR poder > 100 {
+        SCOUTER "  -> Peleador decente"
+    } ESQUIVAR {
+        SCOUTER "  -> Necesita mas entrenamiento"
+    }
+}
+
+clasificar(9500)
+clasificar(3000)
+clasificar(150)
+clasificar(5)
+
+# Condicion combinada con operadores logicos.
+KI energia = 80
+KI tiene_senzu = CANON
+SENSAR energia < 100 FUSION tiene_senzu {
+    SCOUTER "Come una semilla senzu y se recupera"
+}

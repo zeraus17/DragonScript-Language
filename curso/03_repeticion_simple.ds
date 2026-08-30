@@ -1,0 +1,31 @@
+# =====================================================================
+# LECCION 03 - REPETICION SIMPLE
+# =====================================================================
+# A veces necesitamos repetir una accion una cantidad EXACTA y conocida
+# de veces. Para eso usamos GRAVEDAD, inspirado en la camara de
+# gravedad donde Vegeta repite el mismo ejercicio muchas veces.
+#
+#     GRAVEDAD <cantidad> {
+#         ... instrucciones a repetir ...
+#     }
+# =====================================================================
+
+# CONTRATO: hacerFlexiones()
+#   Proposito: muestra una flexion. Se pensara para repetirse.
+TECNICA hacerFlexiones() {
+    SCOUTER "Flexion completada!"
+}
+
+SCOUTER "Vegeta entra a la camara de gravedad"
+
+# Repetimos la misma tecnica 5 veces sin copiar codigo.
+GRAVEDAD 5 {
+    hacerFlexiones()
+}
+
+SCOUTER "---"
+
+# La repeticion simple tambien sirve para dibujar patrones.
+GRAVEDAD 3 {
+    SCOUTER "* Golpe de energia *"
+}

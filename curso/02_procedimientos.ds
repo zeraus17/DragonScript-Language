@@ -1,0 +1,38 @@
+# =====================================================================
+# LECCION 02 - PROCEDIMIENTOS Y CONTRATOS
+# =====================================================================
+# Un PROCEDIMIENTO es un bloque de instrucciones al que le ponemos un
+# NOMBRE para poder usarlo (invocarlo) cuantas veces queramos, sin
+# tener que copiar y pegar el codigo.
+#
+# En DragonScript un procedimiento se define con TECNICA (una tecnica
+# de pelea que el guerrero aprende una vez y luego repite).
+#
+# El CONTRATO es el comentario que escribimos ANTES de la tecnica y que
+# explica QUE hace, sin importar COMO lo hace. Es una promesa al que la
+# usa.
+# =====================================================================
+
+# CONTRATO: saludarGoku()
+#   Proposito: muestra el saludo caracteristico de Goku.
+#   No recibe datos y no devuelve nada (es un procedimiento).
+TECNICA saludarGoku() {
+    SCOUTER "Hola, soy Goku!"
+    SCOUTER "Vamos a entrenar juntos"
+}
+
+# CONTRATO: lanzarKamehameha()
+#   Proposito: describe los pasos de la tecnica Kamehameha.
+TECNICA lanzarKamehameha() {
+    SCOUTER "Ka..."
+    SCOUTER "Me..."
+    SCOUTER "Ha..."
+    SCOUTER "Me..."
+    SCOUTER "HA!!!"
+}
+
+# El PROGRAMA PRINCIPAL invoca a los procedimientos. Fijate que
+# resolver un problema grande se vuelve leer nombres claros.
+saludarGoku()
+lanzarKamehameha()
+saludarGoku()

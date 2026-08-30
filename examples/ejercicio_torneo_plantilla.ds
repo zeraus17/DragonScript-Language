@@ -1,0 +1,97 @@
+# 🥋 Torneo de Artes Marciales - PLANTILLA
+# Completa las funciones marcadas con TODO
+
+# ============================================
+# DEFINIR CLASE CAPSULA
+# ============================================
+CAPSULA Participante {
+    TECNICA __init__(nombre, poder, raza) {
+        # TODO: Asignar los parámetros a los campos usando YO
+        # YO.nombre = ...
+        # YO.poder = ...
+        # YO.raza = ...
+        # YO.victorias = 0
+    }
+}
+
+# ============================================
+# 1. REGISTRAR CAPSULA
+# ============================================
+TECNICA registrarGuerrero(nombre, poder, raza) {
+    # TODO: Usar ACTIVAR Participante(...) y TRANSMITIR el resultado
+}
+
+# ============================================
+# 2. MOSTRAR CAPSULA
+# ============================================
+TECNICA mostrarGuerrero(guerrero) {
+    # TODO: Usar SCOUTER para imprimir:
+    # === NOMBRE ===
+    # Poder: XXX
+    # Raza: XXX
+    # Victorias: XXX
+}
+
+# ============================================
+# 3. CAPSULA MÁS FUERTE
+# ============================================
+TECNICA guerreroMasFuerte(guerreros) {
+    # TODO: Encontrar el guerrero con mayor poder
+    # Pista: Usa KI para guardar el máximo encontrado
+    # Pista: Usa RASTREAR para recorrer la lista
+    # TRANSMITIR el guerrero más fuerte
+}
+
+# ============================================
+# 4. FILTRAR POR PODER MÍNIMO
+# ============================================
+TECNICA filtrarPorPoderMinimo(guerreros, minimo) {
+    # TODO: Crear una lista vacía para los resultados
+    # TODO: Usar RASTREAR para recorrer guerreros
+    # TODO: Si el poder >= minimo, ABSORBER a la lista
+    # TRANSMITIR la lista filtrada
+}
+
+# ============================================
+# 5. PROMEDIO DE PODER
+# ============================================
+TECNICA promedioPoderTotal(guerreros) {
+    # TODO: Crear variable KI suma = 0
+    # TODO: Usar RASTREAR para sumar todos los poderes
+    # TODO: Dividir suma / LONGITUD(guerreros)
+    # TRANSMITIR el promedio
+}
+
+# ============================================
+# 6. SIMULAR COMBATE
+# ============================================
+TECNICA simularCombate(g1, g2) {
+    # TODO: Comparar g1.poder con g2.poder
+    # TODO: El ganador aumenta sus victorias en 1
+    # TODO: SCOUTER mensaje de quién ganó
+    # TRANSMITIR al ganador
+}
+
+# ============================================
+# PROGRAMA PRINCIPAL
+# ============================================
+
+SCOUTER("🥋 TORNEO DE ARTES MARCIALES 🥋")
+SCOUTER("")
+
+# TODO: Crear lista de 5 guerreros usando registrarGuerrero
+# Ejemplo:
+# KI goku = registrarGuerrero("GOKU", 9000, "Saiyajin")
+# KI guerreros = [goku, ...]
+
+# TODO: Mostrar todos los guerreros inscritos
+
+# TODO: Encontrar y mostrar el más fuerte
+
+# TODO: Filtrar por poder >= 5000
+
+# TODO: Calcular promedio
+
+# TODO: Simular 3 combates
+
+# TODO: Mostrar estado final

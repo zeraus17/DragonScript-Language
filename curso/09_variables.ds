@@ -1,0 +1,36 @@
+# =====================================================================
+# LECCION 09 - VARIABLES
+# =====================================================================
+# Una VARIABLE es un espacio con nombre donde guardamos un valor que
+# podemos leer y CAMBIAR a lo largo del programa. En DragonScript se
+# declara con KI (la energia que un guerrero acumula y varia):
+#
+#     KI nombre = valor        # declarar y darle un valor inicial
+#     nombre = nuevo_valor     # cambiar su valor
+#     nombre += 10             # atajo: sumarle 10 a lo que ya tenia
+# =====================================================================
+
+# Declaramos variables con su valor inicial.
+KI nombre = "Goku"
+KI poder = 9000
+
+SCOUTER nombre + " tiene poder " + poder
+
+# Cambiar el valor de una variable.
+poder = 9001
+SCOUTER "Tras el ultimo grito: " + poder
+
+# Atajos de asignacion compuesta.
+poder += 500     # equivale a: poder = poder + 500
+SCOUTER "Cargando ki: " + poder
+poder -= 1       # restar
+SCOUTER "Gasto un poco: " + poder
+poder *= 2       # multiplicar (se transformo!)
+SCOUTER "Transformacion! " + poder
+
+# Un ACUMULADOR es una variable que va sumando dentro de un ciclo.
+KI totalGolpes = 0
+GRAVEDAD 5 {
+    totalGolpes += 1
+}
+SCOUTER "Golpes totales del combo: " + totalGolpes

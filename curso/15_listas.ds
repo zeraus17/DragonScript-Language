@@ -1,0 +1,50 @@
+# =====================================================================
+# LECCION 15 - LISTAS
+# =====================================================================
+# Una LISTA (o grupo) es una coleccion ORDENADA de valores. Se escribe
+# entre corchetes y los elementos van separados por comas:
+#
+#     KI equipo = ["Goku", "Vegeta", "Gohan"]
+#
+# Cada elemento tiene una POSICION (indice) que empieza en 0.
+#
+# Funciones para manipular listas (tematicas Dragon Ball):
+#   * LONGITUD(lista)      -> cuantos elementos tiene
+#   * ESTA_VACIA(lista)    -> CANON si no tiene elementos
+#   * CABEZA(lista)        -> el primer elemento
+#   * COLA(lista)          -> una lista con todos menos el primero
+#   * ABSORBER(lista, x)   -> una NUEVA lista con 'x' agregado al final
+#   * lista1 + lista2      -> une (concatena) dos listas
+# =====================================================================
+
+KI equipo = ["Goku", "Vegeta", "Gohan"]
+
+# Acceso por indice (empieza en 0).
+SCOUTER "Primer integrante: " + equipo[0]
+SCOUTER "Segundo integrante: " + equipo[1]
+
+# Tamano y si esta vacia.
+SCOUTER "Cantidad de integrantes: " + LONGITUD(equipo)
+SCOUTER "El equipo esta vacio? " + ESTA_VACIA(equipo)
+SCOUTER "Una lista vacia esta vacia? " + ESTA_VACIA([])
+
+# Cabeza y cola.
+SCOUTER "Lider (cabeza): " + CABEZA(equipo)
+SCOUTER "Resto (cola): "
+SCOUTER COLA(equipo)
+
+# Agregar un integrante (ABSORBER devuelve una lista nueva).
+KI equipoAmpliado = ABSORBER(equipo, "Piccolo")
+SCOUTER "Equipo ampliado: "
+SCOUTER equipoAmpliado
+
+# Unir dos listas con '+'.
+KI villanos = ["Freezer", "Cell"]
+KI todos = equipo + villanos
+SCOUTER "Todos los personajes: "
+SCOUTER todos
+
+# Modificar un elemento por su indice.
+equipo[0] = "Goku (SSJ)"
+SCOUTER "Tras la transformacion: "
+SCOUTER equipo

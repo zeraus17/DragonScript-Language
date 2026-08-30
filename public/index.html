@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DragonScript Web Playground 🐉</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <script src="dragonscript_engine.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: monospace; background-color: #121212; color: #fff; margin: 0; padding: 15px; }
+        h1 { color: #ff9900; margin-top: 0; font-size: 20px; }
+        .container { display: flex; flex-direction: column; gap: 10px; height: 93vh; }
+        textarea { width: 100%; height: 45%; background: #1e1e1e; color: #d4d4d4; font-size: 14px; padding: 10px; border: 1px solid #333; border-radius: 6px; resize: none; }
+        button { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        button:disabled { background: #444; color: #888; cursor: not-allowed; }
+        #output { width: 100%; height: 45%; background: #000; color: #00ff00; font-size: 14px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
+        #status { color: #aaa; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>DragonScript Playground 🐉</h1>
+        <div id="status">Cargando Pyodide y motor...</div>
+
+        <textarea id="code" placeholder="Escribí tu código DragonScript...">
+KI poder = 9000
+
+TECNICA VerPoder(poder) {
+    TRANSMITIR poder
+}
+
+SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
+        </textarea>
+
+        <button id="run-btn" onclick="runCode()" disabled>Cargando entorno...</button>
+        <div id="output">Consola de salida...</div>
+    </div>
+
+    <script>
+        let pyodide;
+
+        async function init() {
+            const status = document.getElementById("status");
+            const btn = document.getElementById("run-btn");
+            const output = document.getElementById("output");
+
+            try {
+                pyodide = await loadPyodide();
+
+                pyodide.setStdout({
+                    batched: (text) => {
+                        output.innerText += text + "\n";
+                    }
+                });
+
+                pyodide.FS.mkdir('/target');
+                pyodide.FS.mkdir('/target/dragonscript');
+                
+                for (const [filename, content] of Object.entries(window.DRAGONSCRIPT_FILES)) {
+                    pyodide.FS.writeFile(`/target/dragonscript/${filename}`, content);
+                }
+
+                await pyodide.runPythonAsync(`
+import sys
+sys.path.append('/target')
+from dragonscript.lexer import Lexer
+from dragonscript.parser import Parser
+from dragonscript.interpreter import Interpreter
+
+def execute_dragonscript(code):
+    tokens = Lexer(code).tokenize()
+    ast = Parser(tokens).parse()
+    Interpreter().interpret(ast)
+`);
+
+                status.innerText = "⚡ Entorno listo";
+                btn.innerText = "Ejecutar Código ⚡";
+                btn.disabled = false;
+            } catch (err) {
+                status.innerText = "Error: " + err.message;
+            }
+        }
+
+        async function runCode() {
+            const code = document.getElementById("code").value;
+            const output = document.getElementById("output");
+            output.innerText = "";
+
+            try {
+                pyodide.globals.set("user_code", code);
+                await pyodide.runPythonAsync(`execute_dragonscript(user_code)`);
+            } catch (err) {
+                output.innerText += "\nError de ejecucion: " + err.message;
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

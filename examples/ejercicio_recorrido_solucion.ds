@@ -1,0 +1,113 @@
+# 🔍 Análisis de Niveles de Poder - SOLUCIÓN
+# ¡No mires hasta intentarlo! 😄
+
+# ============================================
+# 1. SUMAR PODERES
+# ============================================
+TECNICA sumarPoderes(poderes) {
+    KI suma = 0
+    
+    RASTREAR poder EN poderes {
+        suma = suma + poder
+    }
+    
+    TRANSMITIR suma
+}
+
+# ============================================
+# 2. CONTAR FUERTES
+# ============================================
+TECNICA contarFuertes(poderes, minimo) {
+    KI contador = 0
+    
+    RASTREAR poder EN poderes {
+        SENSAR (poder >= minimo) {
+            contador = contador + 1
+        }
+    }
+    
+    TRANSMITIR contador
+}
+
+# ============================================
+# 3. ENCONTRAR MÁXIMO
+# ============================================
+TECNICA encontrarMaximo(poderes) {
+    KI maximo = CABEZA(poderes)
+    
+    RASTREAR poder EN poderes {
+        SENSAR (poder > maximo) {
+            maximo = poder
+        }
+    }
+    
+    TRANSMITIR maximo
+}
+
+# ============================================
+# 4. MOSTRAR TODOS
+# ============================================
+TECNICA mostrarTodos(poderes) {
+    KI posicion = 1
+    
+    RASTREAR poder EN poderes {
+        SCOUTER("Guerrero " + STR(posicion) + ": " + STR(poder))
+        posicion = posicion + 1
+    }
+}
+
+# ============================================
+# 5. DUPLICAR PODERES
+# ============================================
+TECNICA duplicarPoderes(poderes) {
+    KI resultado = []
+    
+    RASTREAR poder EN poderes {
+        resultado = ABSORBER(resultado, poder * 2)
+    }
+    
+    TRANSMITIR resultado
+}
+
+# ============================================
+# PROGRAMA PRINCIPAL
+# ============================================
+
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+SCOUTER("🔍 ANÁLISIS DE NIVELES DE PODER 🔍")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+SCOUTER("")
+
+KI poderes = [9000, 8500, 7000, 4500, 10000]
+
+# Mostrar lista original
+SCOUTER("📋 Lista de poderes:")
+mostrarTodos(poderes)
+SCOUTER("")
+
+# Suma total
+KI total = sumarPoderes(poderes)
+SCOUTER("➕ Suma total de poder: " + STR(total))
+
+# Contar fuertes
+KI fuertes = contarFuertes(poderes, 5000)
+SCOUTER("💪 Guerreros con poder >= 5000: " + STR(fuertes))
+
+# Encontrar máximo
+KI maximo = encontrarMaximo(poderes)
+SCOUTER("🏆 Poder máximo: " + STR(maximo))
+SCOUTER("")
+
+# Duplicar poderes
+SCOUTER("✨ Poderes después de entrenamiento (x2):")
+KI duplicados = duplicarPoderes(poderes)
+mostrarTodos(duplicados)
+SCOUTER("")
+
+# Comparación
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+SCOUTER("📊 COMPARACIÓN")
+SCOUTER("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+KI nuevoTotal = sumarPoderes(duplicados)
+SCOUTER("Antes: " + STR(total) + " → Después: " + STR(nuevoTotal))
+SCOUTER("¡Aumentaron " + STR(nuevoTotal - total) + " puntos de poder! 🐉")

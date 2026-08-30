@@ -1,0 +1,47 @@
+# =====================================================================
+# LECCION 11 - RECORRIDO DE ACUMULACION
+# =====================================================================
+# Un RECORRIDO visita, uno por uno, todos los elementos de un grupo.
+# En DragonScript se hace con RASTREAR (rastrear cada elemento con el
+# scouter):
+#
+#     RASTREAR elemento EN grupo {
+#         ... usar 'elemento' ...
+#     }
+#
+# Cuando ademas vamos SUMANDO o COMBINANDO en una variable, hablamos de
+# un RECORRIDO DE ACUMULACION (juntar la energia de todos).
+# =====================================================================
+
+KI poderes = [500, 1200, 9000, 300, 8000]
+
+# Recorrido simple: mostrar cada elemento.
+SCOUTER "Poderes del equipo:"
+RASTREAR p EN poderes {
+    SCOUTER "  - " + p
+}
+
+# Acumulacion: sumar todos los poderes.
+KI total = 0
+RASTREAR p EN poderes {
+    total += p
+}
+SCOUTER "Poder total del equipo: " + total
+
+# Acumulacion buscando el maximo.
+KI maximo = 0
+RASTREAR p EN poderes {
+    SENSAR p > maximo {
+        maximo = p
+    }
+}
+SCOUTER "El mas fuerte tiene poder: " + maximo
+
+# Acumulacion contando cuantos superan cierto umbral.
+KI fuertes = 0
+RASTREAR p EN poderes {
+    SENSAR p >= 8000 {
+        fuertes += 1
+    }
+}
+SCOUTER "Guerreros con poder >= 8000: " + fuertes

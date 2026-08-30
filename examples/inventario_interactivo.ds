@@ -1,0 +1,307 @@
+# ==========================================================================
+#  inventario_interactivo.ds  —  Sistema de Inventario Interactivo
+# --------------------------------------------------------------------------
+#  Sistema completo de gestión de inventario con menú interactivo.
+#  El usuario puede agregar productos, realizar ventas, buscar, listar
+#  y gestionar el inventario manualmente mediante un menú.
+# ==========================================================================
+
+# --------------------------------------------------------------------------
+# Clase Producto - Representa un artículo del inventario
+# --------------------------------------------------------------------------
+WARRIOR Producto {
+    TECHNIQUE __init__(nombre, precio, stock, codigo) {
+        SELF.nombre = nombre
+        SELF.codigo = codigo
+        SELF._precio = precio
+        SELF._stock = stock
+    }
+    
+    TECHNIQUE getPrecio() {
+        RETURN SELF._precio
+    }
+    
+    TECHNIQUE getStock() {
+        RETURN SELF._stock
+    }
+    
+    TECHNIQUE reducirStock(cantidad) {
+        IF SELF._stock >= cantidad {
+            SELF._stock = SELF._stock - cantidad
+            RETURN TRUE
+        }
+        RETURN FALSE
+    }
+    
+    TECHNIQUE agregarStock(cantidad) {
+        SELF._stock = SELF._stock + cantidad
+    }
+    
+    TECHNIQUE stockBajo() {
+        RETURN SELF._stock < 5
+    }
+    
+    TECHNIQUE __str__() {
+        RETURN "[" + SELF.codigo + "] " + SELF.nombre + " - $" + SELF._precio + " (Stock: " + SELF._stock + ")"
+    }
+}
+
+# --------------------------------------------------------------------------
+# Clase Inventario - Gestiona la colección de productos
+# --------------------------------------------------------------------------
+WARRIOR Inventario {
+    total_productos = 0
+    
+    TECHNIQUE __init__() {
+        SELF.productos = [NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL]
+        SELF.cantidad = 0
+    }
+    
+    TECHNIQUE agregar(producto) {
+        IF SELF.cantidad >= 50 {
+            SCOUTER "✗ ERROR: Inventario lleno (máximo 50 productos)."
+            RETURN NULL
+        }
+        SELF.productos[SELF.cantidad] = producto
+        SELF.cantidad = SELF.cantidad + 1
+        Inventario.total_productos = Inventario.total_productos + 1
+        SCOUTER "✓ Producto agregado exitosamente."
+    }
+    
+    TECHNIQUE buscarPorNombre(nombre) {
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            IF SELF.productos[i].nombre == nombre {
+                RETURN SELF.productos[i]
+            }
+            i = i + 1
+        }
+        RETURN NULL
+    }
+    
+    TECHNIQUE buscarPorCodigo(codigo) {
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            IF SELF.productos[i].codigo == codigo {
+                RETURN SELF.productos[i]
+            }
+            i = i + 1
+        }
+        RETURN NULL
+    }
+    
+    TECHNIQUE listar() {
+        IF SELF.cantidad == 0 {
+            SCOUTER "  El inventario está vacío."
+            RETURN NULL
+        }
+        
+        SCOUTER "--- INVENTARIO COMPLETO ---"
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            SCOUTER "  " + SELF.productos[i]
+            i = i + 1
+        }
+        SCOUTER "Total de productos: " + SELF.cantidad
+    }
+    
+    TECHNIQUE valorTotal() {
+        KI total = 0
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            KI producto = SELF.productos[i]
+            total = total + (producto.getPrecio() * producto.getStock())
+            i = i + 1
+        }
+        RETURN total
+    }
+    
+    TECHNIQUE alertasStockBajo() {
+        SCOUTER "--- ALERTAS DE STOCK BAJO ---"
+        KI hayAlertas = FALSE
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            IF SELF.productos[i].stockBajo() {
+                SCOUTER "  ⚠️  " + SELF.productos[i]
+                hayAlertas = TRUE
+            }
+            i = i + 1
+        }
+        IF NOT hayAlertas {
+            SCOUTER "  ✓ No hay productos con stock bajo."
+        }
+    }
+    
+    TECHNIQUE vender(nombreProducto, cantidad) {
+        KI producto = SELF.buscarPorNombre(nombreProducto)
+        
+        IF producto == NULL {
+            SCOUTER "✗ ERROR: Producto '" + nombreProducto + "' no encontrado."
+            RETURN NULL
+        }
+        
+        IF producto.getStock() < cantidad {
+            SCOUTER "✗ ERROR: Stock insuficiente de '" + nombreProducto + "'."
+            SCOUTER "  Disponible: " + producto.getStock() + " | Solicitado: " + cantidad
+            RETURN NULL
+        }
+        
+        producto.reducirStock(cantidad)
+        KI venta = CREATE Venta(producto, cantidad)
+        SCOUTER "✓ " + venta
+        RETURN venta
+    }
+}
+
+# --------------------------------------------------------------------------
+# Clase Venta - Registra cada transacción de venta
+# --------------------------------------------------------------------------
+WARRIOR Venta {
+    contador = 0
+    
+    TECHNIQUE __init__(producto, cantidad) {
+        SELF.producto = producto
+        SELF.cantidad = cantidad
+        SELF._total = producto.getPrecio() * cantidad
+        SELF.numero = Venta.contador
+        Venta.contador = Venta.contador + 1
+    }
+    
+    TECHNIQUE getTotal() {
+        RETURN SELF._total
+    }
+    
+    TECHNIQUE __str__() {
+        RETURN "Venta #" + SELF.numero + ": " + SELF.cantidad + "x " + SELF.producto.nombre + " = $" + SELF._total
+    }
+}
+
+# ==========================================================================
+#  PROGRAMA PRINCIPAL - Menú Interactivo
+# ==========================================================================
+
+SCOUTER "=========================================="
+SCOUTER "   SISTEMA DE INVENTARIO - DragonScript"
+SCOUTER "=========================================="
+SCOUTER ""
+
+# Crear el inventario
+KI miInventario = CREATE Inventario()
+KI salir = FALSE
+
+WHILE NOT salir {
+    SCOUTER ""
+    SCOUTER "===== MENÚ PRINCIPAL ====="
+    SCOUTER "1. Agregar producto"
+    SCOUTER "2. Listar todos los productos"
+    SCOUTER "3. Buscar producto"
+    SCOUTER "4. Realizar venta"
+    SCOUTER "5. Reponer stock"
+    SCOUTER "6. Ver alertas de stock bajo"
+    SCOUTER "7. Ver valor total del inventario"
+    SCOUTER "8. Salir"
+    SCOUTER ""
+    
+    KI opcion = INPUT("Seleccioná una opción (1-8): ")
+    SCOUTER ""
+    
+    # Opción 1: Agregar producto
+    IF opcion == "1" {
+        SCOUTER "--- AGREGAR NUEVO PRODUCTO ---"
+        KI nombre = INPUT("Nombre del producto: ")
+        KI codigo = INPUT("Código del producto: ")
+        KI precioStr = INPUT("Precio: $")
+        KI stockStr = INPUT("Stock inicial: ")
+        
+        KI precio = NUM(precioStr)
+        KI stock = NUM(stockStr)
+        
+        KI nuevoProducto = CREATE Producto(nombre, precio, stock, codigo)
+        miInventario.agregar(nuevoProducto)
+    }
+    
+    # Opción 2: Listar productos
+    IF opcion == "2" {
+        miInventario.listar()
+    }
+    
+    # Opción 3: Buscar producto
+    IF opcion == "3" {
+        SCOUTER "--- BUSCAR PRODUCTO ---"
+        SCOUTER "1. Por nombre"
+        SCOUTER "2. Por código"
+        KI tipoBusqueda = INPUT("Seleccioná tipo de búsqueda: ")
+        
+        IF tipoBusqueda == "1" {
+            KI nombre = INPUT("Nombre a buscar: ")
+            KI producto = miInventario.buscarPorNombre(nombre)
+            IF producto != NULL {
+                SCOUTER "✓ Producto encontrado:"
+                SCOUTER "  " + producto
+            } ELSE {
+                SCOUTER "✗ Producto no encontrado."
+            }
+        }
+        
+        IF tipoBusqueda == "2" {
+            KI codigo = INPUT("Código a buscar: ")
+            KI producto = miInventario.buscarPorCodigo(codigo)
+            IF producto != NULL {
+                SCOUTER "✓ Producto encontrado:"
+                SCOUTER "  " + producto
+            } ELSE {
+                SCOUTER "✗ Producto no encontrado."
+            }
+        }
+    }
+    
+    # Opción 4: Realizar venta
+    IF opcion == "4" {
+        SCOUTER "--- REALIZAR VENTA ---"
+        KI nombreProducto = INPUT("Nombre del producto: ")
+        KI cantidadStr = INPUT("Cantidad a vender: ")
+        KI cantidad = NUM(cantidadStr)
+        
+        miInventario.vender(nombreProducto, cantidad)
+    }
+    
+    # Opción 5: Reponer stock
+    IF opcion == "5" {
+        SCOUTER "--- REPONER STOCK ---"
+        KI nombreProducto = INPUT("Nombre del producto: ")
+        KI cantidadStr = INPUT("Cantidad a reponer: ")
+        KI cantidad = NUM(cantidadStr)
+        
+        KI producto = miInventario.buscarPorNombre(nombreProducto)
+        IF producto != NULL {
+            producto.agregarStock(cantidad)
+            SCOUTER "✓ Stock actualizado:"
+            SCOUTER "  " + producto
+        } ELSE {
+            SCOUTER "✗ Producto no encontrado."
+        }
+    }
+    
+    # Opción 6: Alertas de stock bajo
+    IF opcion == "6" {
+        miInventario.alertasStockBajo()
+    }
+    
+    # Opción 7: Valor total del inventario
+    IF opcion == "7" {
+        SCOUTER "--- VALOR TOTAL DEL INVENTARIO ---"
+        KI valor = miInventario.valorTotal()
+        SCOUTER "Valor total: $" + valor
+    }
+    
+    # Opción 8: Salir
+    IF opcion == "8" {
+        SCOUTER "¡Gracias por usar el sistema de inventario!"
+        SCOUTER "¡Hasta luego, Guerrero! 🐉"
+        salir = TRUE
+    }
+}

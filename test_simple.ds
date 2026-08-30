@@ -1,0 +1,8 @@
+INICIAR_TABLERO(4, 4)
+
+ROSHI Test() {
+    VOLAR(NORTE)
+}
+
+Test()
+MOSTRAR_TABLERO()

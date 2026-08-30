@@ -1,0 +1,84 @@
+# =====================================================================
+# LECCION 18 - RECORRIDO DEL TABLERO
+# =====================================================================
+# Aca se ve por que un tablero hace MUY facil entender los recorridos.
+# Vamos a recorrer TODAS las celdas del tablero, fila por fila, dejando
+# una Esfera del Dragon en cada una. Es el "recorrido de tablero"
+# clasico de Gobstones.
+#
+# Estrategia:
+#   * Recorremos cada fila de oeste a este.
+#   * Al terminar una fila, volvemos al oeste, subimos (norte) y seguimos.
+#   * Usamos PUEDE_VOLAR para saber cuando llegamos a un borde.
+# =====================================================================
+
+# --- TECNICAS (se declaran primero, antes de usarlas) ---
+
+# CONTRATO: deja 1 ESFERA_1 en la celda actual.
+TECNICA sembrarCelda() {
+    CARGAR(ESFERA_1)
+}
+
+# CONTRATO: siembra todas las celdas de la fila actual, de oeste a este.
+# Deja al GUERRERO en el extremo este de la fila.
+TECNICA recorrerFila() {
+    sembrarCelda()
+    ENTRENAR (PUEDE_VOLAR(ESTE)) {
+        VOLAR(ESTE)
+        sembrarCelda()
+    }
+}
+
+# CONTRATO: lleva al GUERRERO al extremo oeste de la fila actual.
+TECNICA volverAlOeste() {
+    ENTRENAR (PUEDE_VOLAR(OESTE)) {
+        VOLAR(OESTE)
+    }
+}
+
+# CONTRATO: lleva al GUERRERO al extremo sur (fila de abajo).
+TECNICA volverAlSur() {
+    ENTRENAR (PUEDE_VOLAR(SUR)) {
+        VOLAR(SUR)
+    }
+}
+
+# --- PROGRAMA PRINCIPAL ---
+
+INICIAR_TABLERO(4, 3)
+
+SCOUTER "Sembrando una ESFERA_1 en cada celda del tablero..."
+SCOUTER ""
+
+# Recorremos la primera fila, y luego subimos mientras haya filas arriba.
+recorrerFila()
+ENTRENAR (PUEDE_VOLAR(NORTE)) {
+    volverAlOeste()
+    VOLAR(NORTE)
+    recorrerFila()
+}
+
+MOSTRAR_TABLERO()
+
+# Recorrido de ACUMULACION: contamos todas las esferas del tablero.
+# Volvemos al origen (0,0) y recorremos otra vez sumando.
+volverAlOeste()
+volverAlSur()
+
+KI total = CUANTAS(ESFERA_1)
+ENTRENAR (PUEDE_VOLAR(ESTE)) {
+    VOLAR(ESTE)
+    total = total + CUANTAS(ESFERA_1)
+}
+ENTRENAR (PUEDE_VOLAR(NORTE)) {
+    volverAlOeste()
+    VOLAR(NORTE)
+    total = total + CUANTAS(ESFERA_1)
+    ENTRENAR (PUEDE_VOLAR(ESTE)) {
+        VOLAR(ESTE)
+        total = total + CUANTAS(ESFERA_1)
+    }
+}
+
+SCOUTER ""
+SCOUTER "Total de esferas sembradas: " + STR(total) + "  (deberia ser 4 x 3 = 12)"

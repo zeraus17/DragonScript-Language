@@ -1,0 +1,36 @@
+# =====================================================================
+# LECCION 04 - PARAMETROS
+# =====================================================================
+# Un procedimiento se vuelve mucho mas util si puede recibir DATOS que
+# cambian su comportamiento. Esos datos se llaman PARAMETROS y se
+# escriben entre parentesis al definir la TECNICA.
+#
+#     TECNICA nombre(parametro1, parametro2) { ... }
+#
+# Al invocarla, le pasamos ARGUMENTOS concretos.
+# =====================================================================
+
+# CONTRATO: presentar(nombre)
+#   Proposito: presenta a un guerrero por su nombre.
+#   Parametro: nombre (texto) -> el nombre a mostrar.
+TECNICA presentar(nombre) {
+    SCOUTER "Guerrero en escena: " + nombre
+}
+
+# CONTRATO: cargarKi(nombre, veces)
+#   Proposito: muestra a un guerrero cargando ki cierta cantidad de veces.
+#   Parametros: nombre (texto), veces (numero entero).
+TECNICA cargarKi(nombre, veces) {
+    SCOUTER nombre + " comienza a cargar ki..."
+    GRAVEDAD veces {
+        SCOUTER "  AAAAHHH!"
+    }
+}
+
+# El mismo procedimiento sirve para distintos guerreros.
+presentar("Goku")
+presentar("Vegeta")
+presentar("Piccolo")
+
+cargarKi("Goku", 3)
+cargarKi("Krillin", 1)
