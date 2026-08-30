@@ -149,16 +149,43 @@ def execute_dragonscript(code):
             for (let c = 0; c < ancho; c++) {
                 const cell = document.createElement("div");
                 cell.className = "cell";
-                
-                const key = `(${c}, ${r})`;
-                const tieneEsferas = celdas[key] && Object.keys(celdas[key]).length > 0;
+                cell.style.position = "relative";
+                cell.style.display = "flex";
+                cell.style.flexWrap = "wrap";
+                cell.style.alignContent = "center";
+                cell.style.justifyContent = "center";
+                cell.style.gap = "4px";
 
-                // Renderizado según posición del Guerrero / Esferas
+                // Casilla donde está volando el Guerrero
                 if (c === posX && r === posY) {
-                    cell.innerText = "🧙‍♂️";
                     cell.style.border = "2px solid #ff9900";
-                } else if (tieneEsferas) {
-                    cell.innerText = "🔮";
+                    cell.style.backgroundColor = "#2a2a2a";
+                    
+                    const guerreroTag = document.createElement("span");
+                    guerreroTag.style.fontSize = "14px";
+                    guerreroTag.innerText = "🥋";
+                    cell.appendChild(guerreroTag);
+                }
+
+                const key = `(${c}, ${r})`;
+                const esferasEnCelda = celdas[key] || {};
+
+                // Renderizamos cada Esfera del Dragón acumulada en la celda
+                for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
+                    if (cantidad > 0) {
+                        const badge = document.createElement("span");
+                        badge.style.fontSize = "11px";
+                        badge.style.padding = "2px 4px";
+                        badge.style.borderRadius = "4px";
+                        badge.style.background = "#ff9900";
+                        badge.style.color = "#000";
+                        badge.style.fontWeight = "bold";
+                        
+                        // Formato: 🔮E1 x3
+                        const numEsfera = esfera.replace("ESFERA_", "E");
+                        badge.innerText = `🔮${numEsfera} x${cantidad}`;
+                        cell.appendChild(badge);
+                    }
                 }
 
                 grid.appendChild(cell);
