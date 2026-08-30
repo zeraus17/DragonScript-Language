@@ -22,13 +22,19 @@ from typing import Any, Callable
 
 from . import board as board_mod
 from .errors import ArgumentError, TypeErrorDS
-from .gui_tablero import TableroGUI
+
+# Intentamos importar TableroGUI; si estamos en el navegador (Pyodide), Tkinter no existe
+try:
+    from .gui_tablero import TableroGUI
+    HAS_TKINTER = True
+except ModuleNotFoundError:
+    TableroGUI = None
+    HAS_TKINTER = False
 
 VERSION = "1.0.0"
 
 # Variable de módulo para almacenar la instancia de la GUI
 gui_instance: list = [None]
-
 
 
 class ReturnSignal(Exception):
@@ -185,8 +191,11 @@ def register_builtins(global_env, output=None) -> None:
 
     def _iniciar(ancho, alto):
         tablero.reiniciar(ancho, alto)
-        gui_instance[0] = TableroGUI(ancho, alto)
-        _actualizar_gui()
+        if HAS_TKINTER and TableroGUI is not None:
+            gui_instance[0] = TableroGUI(ancho, alto)
+            _actualizar_gui()
+        else:
+            out.write(f"[DragonScript] Tablero iniciado ({ancho}x{alto}). Modo GUI Tkinter no disponible en este entorno.\n")
         return None
 
     def _volar(direccion):
