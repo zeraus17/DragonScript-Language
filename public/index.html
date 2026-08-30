@@ -131,6 +131,41 @@ def execute_dragonscript(code):
         }
 
         init();
+
+    // Función global que Python llamará directamente a través de 'js.actualizarTableroJS'
+    window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
+        const grid = document.getElementById("grid");
+        if (!grid) return;
+
+        grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
+        grid.innerHTML = "";
+
+        let celdas = {};
+        try {
+            celdas = JSON.parse(celdasJson);
+        } catch (e) {}
+
+        for (let r = 0; r < alto; r++) {
+            for (let c = 0; c < ancho; c++) {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                
+                const key = `(${c}, ${r})`;
+                const tieneEsferas = celdas[key] && Object.keys(celdas[key]).length > 0;
+
+                // Renderizado según posición del Guerrero / Esferas
+                if (c === posX && r === posY) {
+                    cell.innerText = "🧙‍♂️";
+                    cell.style.border = "2px solid #ff9900";
+                } else if (tieneEsferas) {
+                    cell.innerText = "🔮";
+                }
+
+                grid.appendChild(cell);
+            }
+        }
+    };
+
     </script>
 </body>
 </html>

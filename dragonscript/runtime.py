@@ -185,17 +185,35 @@ def register_builtins(global_env, output=None) -> None:
     # TABLERO estilo Gobstones (temática Dragon Ball)
     tablero = board_mod.Board()
 
+    # --------------------------------------------------------------
+    # TABLERO estilo Gobstones (temática Dragon Ball)
+    tablero = board_mod.Board()
+
     def _actualizar_gui():
-        if gui_instance[0] is not None:
+        # 1. Escritorio (Tkinter)
+        if HAS_TKINTER and gui_instance[0] is not None:
             gui_instance[0].renderizar((tablero.x, tablero.y), tablero.celdas)
+
+        # 2. Web (JavaScript directo vía Pyodide)
+        try:
+            import js  # type: ignore[import-not-found]
+        except ImportError:
+            js = None
+
+        try:
+            if js is not None:
+                # Pasamos ancho, alto, x, y, y el estado de las esferas serializado como JSON
+                import json
+                celdas_json = json.dumps({str(k): v for k, v in tablero.celdas.items()})
+                js.actualizarTableroJS(tablero.ancho, tablero.alto, tablero.x, tablero.y, celdas_json)
+        except (AttributeError, Exception):
+            pass  # En entorno de escritorio fuera de Pyodide ignora el llamado JS
 
     def _iniciar(ancho, alto):
         tablero.reiniciar(ancho, alto)
         if HAS_TKINTER and TableroGUI is not None:
             gui_instance[0] = TableroGUI(ancho, alto)
-            _actualizar_gui()
-        else:
-            out.write(f"[DragonScript] Tablero iniciado ({ancho}x{alto}). Modo GUI Tkinter no disponible en este entorno.\n")
+        _actualizar_gui()
         return None
 
     def _volar(direccion):
