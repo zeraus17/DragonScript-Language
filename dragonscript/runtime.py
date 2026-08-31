@@ -194,20 +194,23 @@ def register_builtins(global_env, output=None) -> None:
         if HAS_TKINTER and gui_instance[0] is not None:
             gui_instance[0].renderizar((tablero.x, tablero.y), tablero.celdas)
 
-        # 2. Web (JavaScript directo vía Pyodide)
+        # 2. Web (vía Pyodide / JS)
         try:
-            import js  # type: ignore[import-not-found]
-        except ImportError:
-            js = None
+            import json
+            import time
 
-        try:
-            if js is not None:
-                # Pasamos ancho, alto, x, y, y el estado de las esferas serializado como JSON
-                import json
-                celdas_json = json.dumps({str(k): v for k, v in tablero.celdas.items()})
-                js.actualizarTableroJS(tablero.ancho, tablero.alto, tablero.x, tablero.y, celdas_json)
-        except (AttributeError, Exception):
-            pass  # En entorno de escritorio fuera de Pyodide ignora el llamado JS
+            try:
+                import js  # type: ignore[import-not-found]
+            except ImportError:
+                return
+
+            celdas_json = json.dumps({str(k): v for k, v in tablero.celdas.items()})
+            js.actualizarTableroJS(tablero.ancho, tablero.alto, tablero.x, tablero.y, celdas_json)
+
+            # Si estamos en la web, pausamos unos milisegundos para permitir que el navegador renderice el frame
+            time.sleep(0.3)  # Pausa de 300ms entre movimiento/acción
+        except Exception:
+            pass
 
     def _iniciar(ancho, alto):
         tablero.reiniciar(ancho, alto)

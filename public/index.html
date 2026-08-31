@@ -118,17 +118,25 @@ def execute_dragonscript(code):
         }
 
         async function runCode() {
-            const code = document.getElementById("code").value;
-            const output = document.getElementById("output");
-            output.innerText = "";
+    const code = document.getElementById("code").value;
+    const output = document.getElementById("output");
+    output.innerText = "";
+    
+    const btn = document.getElementById("run-btn");
+    btn.disabled = true;
+    btn.innerText = "Ejecutando...";
 
-            try {
-                pyodide.globals.set("user_code", code);
-                await pyodide.runPythonAsync(`execute_dragonscript(user_code)`);
-            } catch (err) {
-                output.innerText += "\nError de ejecucion: " + err.message;
-            }
-        }
+    try {
+        pyodide.globals.set("user_code", code);
+        // Usamos runPythonAsync para permitir pausar el hilo en la web
+        await pyodide.runPythonAsync(`execute_dragonscript(user_code)`);
+    } catch (err) {
+        output.innerText += "\nError de ejecucion: " + err.message;
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Ejecutar Código ⚡";
+    }
+}
 
         init();
 
