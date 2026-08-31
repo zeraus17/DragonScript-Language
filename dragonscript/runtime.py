@@ -13,9 +13,9 @@ Aquí se definen:
 * :func:`register_builtins` — registra las funciones matemáticas y utilidades
   básicas en el ámbito global.
 """
-import asyncio
-from __future__ import annotations
 
+from __future__ import annotations
+import asyncio
 import math
 import sys
 from typing import Any, Callable
