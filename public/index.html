@@ -9,21 +9,65 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: monospace; background-color: #121212; color: #fff; margin: 0; padding: 15px; }
-        h1 { color: #ff9900; margin-top: 0; font-size: 20px; }
-        .main-layout { display: flex; gap: 15px; height: 90vh; }
-        .editor-section { flex: 1; display: flex; flex-direction: column; gap: 10px; }
-        .board-section { width: 320px; display: flex; flex-direction: column; gap: 10px; }
-        
-        textarea { width: 100%; height: 50%; background: #1e1e1e; color: #d4d4d4; font-size: 14px; padding: 10px; border: 1px solid #333; border-radius: 6px; resize: none; }
-        button { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        h1 { color: #ff9900; margin-top: 0; font-size: 20px; text-align: center; }
+        #status { text-align: center; font-size: 13px; color: #aaa; margin-bottom: 10px; }
+
+        .main-layout { display: flex; flex-direction: column; gap: 15px; }
+        @media (min-width: 768px) {
+            .main-layout { flex-direction: row; height: 85vh; }
+        }
+
+        .editor-section { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 350px; }
+        .board-section { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+        @media (min-width: 768px) {
+            .board-section { width: 340px; }
+        }
+
+        textarea { width: 100%; flex: 1; min-height: 180px; background: #1e1e1e; color: #d4d4d4; font-size: 14px; padding: 10px; border: 1px solid #333; border-radius: 6px; resize: none; }
+        button { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
         button:disabled { background: #444; color: #888; cursor: not-allowed; }
-        #output { width: 100%; height: 45%; background: #000; color: #00ff00; font-size: 13px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
-        
-        /* Tablero Visual Grid */
-        #grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #222; padding: 5px; border-radius: 6px; aspect-ratio: 1; }
-        .cell { background: #333; display: flex; align-items: center; justify-content: center; font-size: 20px; border-radius: 4px; }
-        .player { background: #ff9900; }
-        .dragonball { background: #e67e22; }
+        #output { width: 100%; height: 140px; background: #000; color: #00ff00; font-size: 12px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
+
+        #grid { 
+            display: grid; 
+            gap: 4px; 
+            background: #222; 
+            padding: 6px; 
+            border-radius: 6px; 
+            width: 100%; 
+            max-width: 340px; 
+            aspect-ratio: 1; 
+            border: 1px solid #333;
+        }
+
+        .cell { 
+            background: #2d2d2d; 
+            border-radius: 4px; 
+            position: relative; 
+            display: flex; 
+            flex-wrap: wrap; 
+            align-content: center; 
+            justify-content: center; 
+            gap: 2px; 
+            padding: 2px;
+            overflow: hidden;
+        }
+
+        .guerrero-cell {
+            border: 2px solid #ff9900 !important;
+            background-color: #3a3a2a !important;
+        }
+
+        .badge {
+            font-size: 10px;
+            padding: 1px 3px;
+            border-radius: 3px;
+            background: #333;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
     </style>
 </head>
 <body>
@@ -34,13 +78,12 @@
     <div class="main-layout">
         <div class="editor-section">
             <textarea id="code" placeholder="Escribí tu código DragonScript...">
-KI poder = 9000
-
-TECNICA VerPoder(poder) {
-    TRANSMITIR poder
-}
-
-SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
+INICIAR_TABLERO(4, 4)
+CARGAR(ESFERA_1)
+VOLAR(ESTE)
+CARGAR(ESFERA_7)
+VOLAR(NORTE)
+MOSTRAR_TABLERO()
             </textarea>
 
             <button id="run-btn" onclick="runCode()" disabled>Cargando entorno...</button>
@@ -48,7 +91,7 @@ SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
         </div>
 
         <div class="board-section">
-            <h3>Tablero GUI Web</h3>
+            <h3 style="margin: 0; color: #ff9900;">Tablero GUI Web</h3>
             <div id="grid"></div>
         </div>
     </div>
@@ -58,10 +101,18 @@ SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
         let pasotableroQueue = [];
         let animandoTablero = false;
 
-        // Función global invocada desde Python
+        const ESTRELLAS_MAP = {
+            "ESFERA_1": "1⭐",
+            "ESFERA_2": "2⭐",
+            "ESFERA_3": "3⭐",
+            "ESFERA_4": "4⭐",
+            "ESFERA_5": "5⭐",
+            "ESFERA_6": "6⭐",
+            "ESFERA_7": "7⭐"
+        };
+
         window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
             pasotableroQueue.push({ ancho, alto, posX, posY, celdasJson });
-            
             if (!animandoTablero) {
                 procesarColaAnimacion();
             }
@@ -75,10 +126,7 @@ SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
 
             animandoTablero = true;
             const estado = pasotableroQueue.shift();
-            
             renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
-
-            // Ajustá este valor (en milisegundos) para cambiar la velocidad del movimiento paso a paso
             setTimeout(procesarColaAnimacion, 300);
         }
 
@@ -92,44 +140,28 @@ SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
             let celdas = {};
             try { celdas = JSON.parse(celdasJson); } catch (e) {}
 
-            for (let r = 0; r < alto; r++) {
+            for (let r = alto - 1; r >= 0; r--) {
                 for (let c = 0; c < ancho; c++) {
                     const cell = document.createElement("div");
                     cell.className = "cell";
-                    cell.style.position = "relative";
-                    cell.style.display = "flex";
-                    cell.style.flexWrap = "wrap";
-                    cell.style.alignContent = "center";
-                    cell.style.justifyContent = "center";
-                    cell.style.gap = "4px";
 
-                    // Posición del Guerrero
                     if (c === posX && r === posY) {
-                        cell.style.border = "2px solid #ff9900";
-                        cell.style.backgroundColor = "#2a2a2a";
-                        
+                        cell.classList.add("guerrero-cell");
                         const guerreroTag = document.createElement("span");
                         guerreroTag.style.fontSize = "14px";
                         guerreroTag.innerText = "🥋";
                         cell.appendChild(guerreroTag);
                     }
 
-                    // Esferas del Dragón
                     const key = `(${c}, ${r})`;
                     const esferasEnCelda = celdas[key] || {};
 
                     for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
                         if (cantidad > 0) {
                             const badge = document.createElement("span");
-                            badge.style.fontSize = "11px";
-                            badge.style.padding = "2px 4px";
-                            badge.style.borderRadius = "4px";
-                            badge.style.background = "#ff9900";
-                            badge.style.color = "#000";
-                            badge.style.fontWeight = "bold";
-                            
-                            const numEsfera = esfera.replace("ESFERA_", "E");
-                            badge.innerText = `🔮${numEsfera} x${cantidad}`;
+                            badge.className = "badge";
+                            const estrellas = ESTRELLAS_MAP[esfera] || esfera;
+                            badge.innerText = `🟠${estrellas}${cantidad > 1 ? ' x' + cantidad : ''}`;
                             cell.appendChild(badge);
                         }
                     }
@@ -185,7 +217,6 @@ def execute_dragonscript(code):
             const btn = document.getElementById("run-btn");
             output.innerText = "";
 
-            // Vaciar la cola de animación
             pasotableroQueue = [];
             animandoTablero = false;
 
