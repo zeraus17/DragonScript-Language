@@ -6,10 +6,7 @@
     <title>DragonScript Web Playground 🐉</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <script src="dragonscript_engine.js"></script>
-    
-    <!-- CodeJar y Prism.js para resaltado de sintaxis -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codejar/1.1.0/codejar.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     
     <style>
         * { box-sizing: border-box; }
@@ -47,7 +44,7 @@
         .tab-content { display: none; flex: 1; flex-direction: column; position: relative; }
         .tab-content.active { display: flex; }
 
-        /* Contenedor de Editor con CodeJar */
+        /* Contenedor de Editor */
         .editor-container {
             width: 100%;
             flex: 1;
@@ -64,7 +61,7 @@
             outline: none;
         }
 
-        /* Barra de herramientas para importar/exportar */
+        /* Toolbar */
         .file-toolbar {
             display: flex;
             gap: 6px;
@@ -104,13 +101,12 @@
         .slider-container { display: flex; align-items: center; gap: 6px; flex: 1; font-size: 12px; color: #ccc; }
         .slider-container input { flex: 1; }
 
-        /* Colores del Syntax Highlighting */
-        .token.comment { color: #6272a4; font-style: italic; }
-        .token.keyword { color: #ff79c6; font-weight: bold; }
-        .token.command { color: #50fa7b; font-weight: bold; }
-        .token.constant { color: #bd93f9; }
-        .token.number { color: #bd93f9; }
-        .token.string { color: #f1fa8c; }
+        /* Syntax Highlighting Colors */
+        .hl-comment { color: #6272a4; font-style: italic; }
+        .hl-keyword { color: #ff79c6; font-weight: bold; }
+        .hl-command { color: #50fa7b; font-weight: bold; }
+        .hl-constant { color: #bd93f9; }
+        .hl-number { color: #bd93f9; }
     </style>
 </head>
 <body>
@@ -125,19 +121,16 @@
                 <button class="tab-btn" onclick="switchTab('library')">📚 Biblioteca</button>
             </div>
 
-            <!-- Toolbar de archivos -->
             <div class="file-toolbar">
                 <label for="file-input">📥 Cargar Archivo (.ds)</label>
                 <input type="file" id="file-input" accept=".ds,.txt" style="display:none;" onchange="cargarArchivo(event)">
                 <button onclick="guardarArchivo()">Exportar (.ds) 💾</button>
             </div>
 
-            <!-- Editor Programa -->
             <div id="tab-program" class="tab-content active">
                 <div id="editor-program" class="editor-container"></div>
             </div>
 
-            <!-- Editor Biblioteca -->
             <div id="tab-library" class="tab-content">
                 <div id="editor-library" class="editor-container"></div>
             </div>
@@ -177,18 +170,24 @@
             "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
         };
 
-        // Reglas de Highlighting para DragonScript
-        Prism.languages.dragonscript = {
-            'comment': /#.*/,
-            'keyword': /\b(ROSHI|SAYAYIN|SI|SINO|MIENTRAS|RETORNAR|PROGRAMA)\b/,
-            'command': /\b(INICIAR_TABLERO|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO)\b/,
-            'constant': /\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7)\b/,
-            'number': /\b\d+\b/,
-            'string': /"[^"]*"/
-        };
+        // Resaltador de sintaxis liviano sin dependencias
+        const highlightDragonScript = editor => {
+            let text = editor.textContent;
+            
+            // Reemplazo seguro de entidades HTML
+            let html = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
 
-        const highlightCode = editor => {
-            Prism.highlightElement(editor);
+            // Palabras clave y comandos
+            html = html.replace(/(#.*)/g, '<span class="hl-comment">$1</span>')
+                .replace(/\b(ROSHI|SAYAYIN|SI|SINO|MIENTRAS|RETORNAR|PROGRAMA)\b/g, '<span class="hl-keyword">$1</span>')
+                .replace(/\b(INICIAR_TABLERO|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO)\b/g, '<span class="hl-command">$1</span>')
+                .replace(/\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7)\b/g, '<span class="hl-constant">$1</span>')
+                .replace(/\b(\d+)\b/g, '<span class="hl-number">$1</span>');
+
+            editor.innerHTML = html;
         };
 
         function initEditors() {
@@ -201,8 +200,8 @@
             elProg.textContent = defaultProgram;
             elLib.textContent = defaultLibrary;
 
-            jarProgram = CodeJar(elProg, highlightCode);
-            jarLibrary = CodeJar(elLib, highlightCode);
+            jarProgram = CodeJar(elProg, highlightDragonScript);
+            jarLibrary = CodeJar(elLib, highlightDragonScript);
 
             jarProgram.onUpdate(code => localStorage.setItem("ds_program", code));
             jarLibrary.onUpdate(code => localStorage.setItem("ds_library", code));
@@ -222,7 +221,6 @@
             }
         }
 
-        // Cargar archivo local .ds
         function cargarArchivo(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -242,7 +240,6 @@
             e.target.value = '';
         }
 
-        // Exportar archivo .ds
         function guardarArchivo() {
             const content = activeTab === 'program' ? jarProgram.toString() : jarLibrary.toString();
             const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
