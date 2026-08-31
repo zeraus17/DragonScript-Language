@@ -142,64 +142,64 @@ def execute_dragonscript(code):
 
     // Función global que Python llamará directamente a través de 'js.actualizarTableroJS'
     window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
-        const grid = document.getElementById("grid");
-        if (!grid) return;
+    const grid = document.getElementById("grid");
+    if (!grid) return;
 
-        grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
-        grid.innerHTML = "";
+    grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
+    grid.innerHTML = "";
 
-        let celdas = {};
-        try {
-            celdas = JSON.parse(celdasJson);
-        } catch (e) {}
+    let celdas = {};
+    try {
+        celdas = JSON.parse(celdasJson);
+    } catch (e) {}
 
-        for (let r = 0; r < alto; r++) {
-            for (let c = 0; c < ancho; c++) {
-                const cell = document.createElement("div");
-                cell.className = "cell";
-                cell.style.position = "relative";
-                cell.style.display = "flex";
-                cell.style.flexWrap = "wrap";
-                cell.style.alignContent = "center";
-                cell.style.justifyContent = "center";
-                cell.style.gap = "4px";
+    for (let r = 0; r < alto; r++) {
+        for (let c = 0; c < ancho; c++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.style.position = "relative";
+            cell.style.display = "flex";
+            cell.style.flexWrap = "wrap";
+            cell.style.alignContent = "center";
+            cell.style.justifyContent = "center";
+            cell.style.gap = "4px";
 
-                // Casilla donde está volando el Guerrero
-                if (c === posX && r === posY) {
-                    cell.style.border = "2px solid #ff9900";
-                    cell.style.backgroundColor = "#2a2a2a";
-                    
-                    const guerreroTag = document.createElement("span");
-                    guerreroTag.style.fontSize = "14px";
-                    guerreroTag.innerText = "🥋";
-                    cell.appendChild(guerreroTag);
-                }
-
-                const key = `(${c}, ${r})`;
-                const esferasEnCelda = celdas[key] || {};
-
-                // Renderizamos cada Esfera del Dragón acumulada en la celda
-                for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
-                    if (cantidad > 0) {
-                        const badge = document.createElement("span");
-                        badge.style.fontSize = "11px";
-                        badge.style.padding = "2px 4px";
-                        badge.style.borderRadius = "4px";
-                        badge.style.background = "#ff9900";
-                        badge.style.color = "#000";
-                        badge.style.fontWeight = "bold";
-                        
-                        // Formato: 🔮E1 x3
-                        const numEsfera = esfera.replace("ESFERA_", "E");
-                        badge.innerText = `🔮${numEsfera} x${cantidad}`;
-                        cell.appendChild(badge);
-                    }
-                }
-
-                grid.appendChild(cell);
+            if (c === posX && r === posY) {
+                cell.style.border = "2px solid #ff9900";
+                cell.style.backgroundColor = "#2a2a2a";
+                
+                const guerreroTag = document.createElement("span");
+                guerreroTag.style.fontSize = "14px";
+                guerreroTag.innerText = "🥋";
+                cell.appendChild(guerreroTag);
             }
+
+            const key = `(${c}, ${r})`;
+            const esferasEnCelda = celdas[key] || {};
+
+            for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
+                if (cantidad > 0) {
+                    const badge = document.createElement("span");
+                    badge.style.fontSize = "11px";
+                    badge.style.padding = "2px 4px";
+                    badge.style.borderRadius = "4px";
+                    badge.style.background = "#ff9900";
+                    badge.style.color = "#000";
+                    badge.style.fontWeight = "bold";
+                    
+                    const numEsfera = esfera.replace("ESFERA_", "E");
+                    badge.innerText = `🔮${numEsfera} x${cantidad}`;
+                    cell.appendChild(badge);
+                }
+            }
+
+            grid.appendChild(cell);
         }
-    };
+    }
+    
+    // Fuerza al navegador a repintar el tablero inmediatamente en el DOM
+    void grid.offsetHeight;
+};
 
     </script>
 </body>
