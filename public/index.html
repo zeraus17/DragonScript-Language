@@ -55,22 +55,85 @@ SCOUTER "El poder de pelea es: " + STR(VerPoder(poder))
 
     <script>
         let pyodide;
-        let boardState = { x: 0, y: 0, size: 5, balls: [] };
+        let pasotableroQueue = [];
+        let animandoTablero = false;
 
-        function renderBoard() {
+        // Función global invocada desde Python
+        window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
+            pasotableroQueue.push({ ancho, alto, posX, posY, celdasJson });
+            
+            if (!animandoTablero) {
+                procesarColaAnimacion();
+            }
+        };
+
+        function procesarColaAnimacion() {
+            if (pasotableroQueue.length === 0) {
+                animandoTablero = false;
+                return;
+            }
+
+            animandoTablero = true;
+            const estado = pasotableroQueue.shift();
+            
+            renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
+
+            // Ajustá este valor (en milisegundos) para cambiar la velocidad del movimiento paso a paso
+            setTimeout(procesarColaAnimacion, 300);
+        }
+
+        function renderizarFrameTablero(ancho, alto, posX, posY, celdasJson) {
             const grid = document.getElementById("grid");
+            if (!grid) return;
+
+            grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
             grid.innerHTML = "";
-            for (let r = 0; r < boardState.size; r++) {
-                for (let c = 0; c < boardState.size; c++) {
+
+            let celdas = {};
+            try { celdas = JSON.parse(celdasJson); } catch (e) {}
+
+            for (let r = 0; r < alto; r++) {
+                for (let c = 0; c < ancho; c++) {
                     const cell = document.createElement("div");
                     cell.className = "cell";
-                    if (boardState.x === c && boardState.y === r) {
-                        cell.classList.add("player");
-                        cell.innerText = "🧙‍♂️";
-                    } else if (boardState.balls.some(b => b.x === c && b.y === r)) {
-                        cell.classList.add("dragonball");
-                        cell.innerText = "🔮";
+                    cell.style.position = "relative";
+                    cell.style.display = "flex";
+                    cell.style.flexWrap = "wrap";
+                    cell.style.alignContent = "center";
+                    cell.style.justifyContent = "center";
+                    cell.style.gap = "4px";
+
+                    // Posición del Guerrero
+                    if (c === posX && r === posY) {
+                        cell.style.border = "2px solid #ff9900";
+                        cell.style.backgroundColor = "#2a2a2a";
+                        
+                        const guerreroTag = document.createElement("span");
+                        guerreroTag.style.fontSize = "14px";
+                        guerreroTag.innerText = "🥋";
+                        cell.appendChild(guerreroTag);
                     }
+
+                    // Esferas del Dragón
+                    const key = `(${c}, ${r})`;
+                    const esferasEnCelda = celdas[key] || {};
+
+                    for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
+                        if (cantidad > 0) {
+                            const badge = document.createElement("span");
+                            badge.style.fontSize = "11px";
+                            badge.style.padding = "2px 4px";
+                            badge.style.borderRadius = "4px";
+                            badge.style.background = "#ff9900";
+                            badge.style.color = "#000";
+                            badge.style.fontWeight = "bold";
+                            
+                            const numEsfera = esfera.replace("ESFERA_", "E");
+                            badge.innerText = `🔮${numEsfera} x${cantidad}`;
+                            cell.appendChild(badge);
+                        }
+                    }
+
                     grid.appendChild(cell);
                 }
             }
@@ -108,7 +171,6 @@ def execute_dragonscript(code):
     Interpreter().interpret(ast)
 `);
 
-                renderBoard();
                 status.innerText = "⚡ Entorno listo";
                 btn.innerText = "Ejecutar Código ⚡";
                 btn.disabled = false;
@@ -118,118 +180,30 @@ def execute_dragonscript(code):
         }
 
         async function runCode() {
-    const code = document.getElementById("code").value;
-    const output = document.getElementById("output");
-    output.innerText = "";
-    
-    const btn = document.getElementById("run-btn");
-    btn.disabled = true;
-    btn.innerText = "Ejecutando...";
+            const code = document.getElementById("code").value;
+            const output = document.getElementById("output");
+            const btn = document.getElementById("run-btn");
+            output.innerText = "";
 
-    try {
-        pyodide.globals.set("user_code", code);
-        // Usamos runPythonAsync para permitir pausar el hilo en la web
-        await pyodide.runPythonAsync(`execute_dragonscript(user_code)`);
-    } catch (err) {
-        output.innerText += "\nError de ejecucion: " + err.message;
-    } finally {
-        btn.disabled = false;
-        btn.innerText = "Ejecutar Código ⚡";
-    }
-}
+            // Vaciar la cola de animación
+            pasotableroQueue = [];
+            animandoTablero = false;
+
+            btn.disabled = true;
+            btn.innerText = "Ejecutando...";
+
+            try {
+                pyodide.globals.set("user_code", code);
+                await pyodide.runPythonAsync(`execute_dragonscript(user_code)`);
+            } catch (err) {
+                output.innerText += "\nError de ejecucion: " + err.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Ejecutar Código ⚡";
+            }
+        }
 
         init();
-
-    // Función global que Python llamará directamente a través de 'js.actualizarTableroJS'
-    // Cola de pasos para la animación
-let pasotableroQueue = [];
-let animandoTablero = false;
-
-window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
-    // Guardamos cada estado que envía Python
-    pasotableroQueue.push({ ancho, alto, posX, posY, celdasJson });
-    
-    if (!animandoTablero) {
-        procesarColaAnimacion();
-    }
-};
-
-function procesarColaAnimacion() {
-    if (pasotableroQueue.length === 0) {
-        animandoTablero = false;
-        return;
-    }
-
-    animandoTablero = true;
-    const estado = pasotableroQueue.shift();
-    
-    renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
-
-    // 300 ms entre cada movimiento/acción (podés subirlo o bajarlo)
-    setTimeout(procesarColaAnimacion, 300);
-}
-
-function renderizarFrameTablero(ancho, alto, posX, posY, celdasJson) {
-    const grid = document.getElementById("grid");
-    if (!grid) return;
-
-    grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
-    grid.innerHTML = "";
-
-    let celdas = {};
-    try { celdas = JSON.parse(celdasJson); } catch (e) {}
-
-    for (let r = 0; r < alto; r++) {
-        for (let c = 0; c < ancho; c++) {
-            const cell = document.createElement("div");
-            cell.className = "cell";
-            cell.style.position = "relative";
-            cell.style.display = "flex";
-            cell.style.flexWrap = "wrap";
-            cell.style.alignContent = "center";
-            cell.style.justifyContent = "center";
-            cell.style.gap = "4px";
-
-            // Casilla del Guerrero
-            if (c === posX && r === posY) {
-                cell.style.border = "2px solid #ff9900";
-                cell.style.backgroundColor = "#2a2a2a";
-                
-                const guerreroTag = document.createElement("span");
-                guerreroTag.style.fontSize = "14px";
-                guerreroTag.innerText = "🥋";
-                cell.appendChild(guerreroTag);
-            }
-
-            // Esferas del Dragón acumuladas
-            const key = `(${c}, ${r})`;
-            const esferasEnCelda = celdas[key] || {};
-
-            for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
-                if (cantidad > 0) {
-                    const badge = document.createElement("span");
-                    badge.style.fontSize = "11px";
-                    badge.style.padding = "2px 4px";
-                    badge.style.borderRadius = "4px";
-                    badge.style.background = "#ff9900";
-                    badge.style.color = "#000";
-                    badge.style.fontWeight = "bold";
-                    
-                    const numEsfera = esfera.replace("ESFERA_", "E");
-                    badge.innerText = `🔮${numEsfera} x${cantidad}`;
-                    cell.appendChild(badge);
-                }
-            }
-
-            grid.appendChild(cell);
-        }
-    }
-
-    
-    // Fuerza al navegador a repintar el tablero inmediatamente en el DOM
-    void grid.offsetHeight;
-};
-
     </script>
 </body>
 </html>

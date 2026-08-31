@@ -18,6 +18,7 @@ Aquí se definen:
 from __future__ import annotations
 
 # 2. Todos los demás imports van abajo
+import asyncio
 import math
 import sys
 from typing import Any, Callable
@@ -189,49 +190,50 @@ def register_builtins(global_env, output=None) -> None:
     # TABLERO estilo Gobstones (temática Dragon Ball)
     tablero = board_mod.Board()
 
-    async def _actualizar_gui():
+    def _actualizar_gui():
         # 1. Escritorio (Tkinter)
         if HAS_TKINTER and gui_instance[0] is not None:
             gui_instance[0].renderizar((tablero.x, tablero.y), tablero.celdas)
-        
+
         # 2. Web (vía Pyodide / JS)
         try:
             import js
-            import json
-            
-            celdas_json = json.dumps({str(k): v for k, v in tablero.celdas.items()})
-            js.actualizarTableroJS(tablero.ancho, tablero.alto, tablero.x, tablero.y, celdas_json)
-            
-            # Cede el hilo principal al navegador por 300ms para que pinte el DOM
-            await asyncio.sleep(0.3)
-        except Exception:
-            pass
+        except ImportError:
+            js = None
 
-    async def _iniciar(ancho, alto):
+        if js is not None:
+            try:
+                import json
+                celdas_json = json.dumps({str(k): v for k, v in tablero.celdas.items()})
+                js.actualizarTableroJS(tablero.ancho, tablero.alto, tablero.x, tablero.y, celdas_json)
+            except Exception:
+                pass
+
+    def _iniciar(ancho, alto):
         tablero.reiniciar(ancho, alto)
         if HAS_TKINTER and TableroGUI is not None:
             gui_instance[0] = TableroGUI(ancho, alto)
-        await _actualizar_gui()
+        _actualizar_gui()
         return None
 
-    async def _volar(direccion):
+    def _volar(direccion):
         tablero.volar(direccion)
-        await _actualizar_gui()
+        _actualizar_gui()
         return None
 
-    async def _cargar(esfera):
+    def _cargar(esfera):
         tablero.cargar(esfera)
-        await _actualizar_gui()
+        _actualizar_gui()
         return None
 
-    async def _drenar(esfera):
+    def _drenar(esfera):
         tablero.drenar(esfera)
-        await _actualizar_gui()
+        _actualizar_gui()
         return None
 
-    async def _mostrar_tablero():
+    def _mostrar_tablero():
         out.write(tablero.render() + "\n")
-        await _actualizar_gui()
+        _actualizar_gui()
         return None
 
     def _iniciar(ancho, alto):
