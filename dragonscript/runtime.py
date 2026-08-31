@@ -208,7 +208,7 @@ def register_builtins(global_env, output=None) -> None:
             js.actualizarTableroJS(tablero.ancho, tablero.alto, tablero.x, tablero.y, celdas_json)
 
             # Si estamos en la web, pausamos unos milisegundos para permitir que el navegador renderice el frame
-            time.sleep(0.3)  # Pausa de 300ms entre movimiento/acción
+            time.sleep(0.5)  # Pausa de 300ms entre movimiento/acción
         except Exception:
             pass
 
