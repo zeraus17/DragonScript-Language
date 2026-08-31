@@ -141,35 +141,35 @@ def execute_dragonscript(code):
         init();
 
     // Función global que Python llamará directamente a través de 'js.actualizarTableroJS'
-    // Cola de fotogramas para la animación paso a paso
-let pasoQueue = [];
-let animando = false;
+    // Cola de pasos para la animación
+let pasotableroQueue = [];
+let animandoTablero = false;
 
 window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
-    // Guardamos cada estado del tablero en la cola
-    pasoQueue.push({ ancho, alto, posX, posY, celdasJson });
+    // Guardamos cada estado que envía Python
+    pasotableroQueue.push({ ancho, alto, posX, posY, celdasJson });
     
-    if (!animando) {
+    if (!animandoTablero) {
         procesarColaAnimacion();
     }
 };
 
 function procesarColaAnimacion() {
-    if (pasoQueue.length === 0) {
-        animando = false;
+    if (pasotableroQueue.length === 0) {
+        animandoTablero = false;
         return;
     }
 
-    animando = true;
-    const estado = pasoQueue.shift(); // Obtener el siguiente paso
+    animandoTablero = true;
+    const estado = pasotableroQueue.shift();
     
-    renderizarFrame(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
+    renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
 
-    // Cambiá 300 por los milisegundos de velocidad entre paso y paso
-    setTimeout(procesarColaAnimacion, 300); 
+    // 300 ms entre cada movimiento/acción (podés subirlo o bajarlo)
+    setTimeout(procesarColaAnimacion, 300);
 }
 
-function renderizarFrame(ancho, alto, posX, posY, celdasJson) {
+function renderizarFrameTablero(ancho, alto, posX, posY, celdasJson) {
     const grid = document.getElementById("grid");
     if (!grid) return;
 
@@ -190,6 +190,7 @@ function renderizarFrame(ancho, alto, posX, posY, celdasJson) {
             cell.style.justifyContent = "center";
             cell.style.gap = "4px";
 
+            // Casilla del Guerrero
             if (c === posX && r === posY) {
                 cell.style.border = "2px solid #ff9900";
                 cell.style.backgroundColor = "#2a2a2a";
@@ -200,6 +201,7 @@ function renderizarFrame(ancho, alto, posX, posY, celdasJson) {
                 cell.appendChild(guerreroTag);
             }
 
+            // Esferas del Dragón acumuladas
             const key = `(${c}, ${r})`;
             const esferasEnCelda = celdas[key] || {};
 
@@ -222,6 +224,7 @@ function renderizarFrame(ancho, alto, posX, posY, celdasJson) {
             grid.appendChild(cell);
         }
     }
+
     
     // Fuerza al navegador a repintar el tablero inmediatamente en el DOM
     void grid.offsetHeight;

@@ -14,16 +14,16 @@ Aquí se definen:
   básicas en el ámbito global.
 """
 
+# 1. ESTO TIENE QUE IR OBLIGATORIAMENTE PRIMERO
 from __future__ import annotations
-import asyncio
+
+# 2. Todos los demás imports van abajo
 import math
 import sys
 from typing import Any, Callable
 
 from . import board as board_mod
 from .errors import ArgumentError, TypeErrorDS
-
-# Intentamos importar TableroGUI; si estamos en el navegador (Pyodide), Tkinter no existe
 try:
     from .gui_tablero import TableroGUI
     HAS_TKINTER = True
