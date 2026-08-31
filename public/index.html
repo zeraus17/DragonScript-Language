@@ -20,7 +20,7 @@
         .editor-section { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 350px; }
         .board-section { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
         @media (min-width: 768px) {
-            .board-section { width: 340px; }
+            .board-section { width: 360px; }
         }
 
         textarea { width: 100%; flex: 1; min-height: 180px; background: #1e1e1e; color: #d4d4d4; font-size: 14px; padding: 10px; border: 1px solid #333; border-radius: 6px; resize: none; }
@@ -28,45 +28,110 @@
         button:disabled { background: #444; color: #888; cursor: not-allowed; }
         #output { width: 100%; height: 140px; background: #000; color: #00ff00; font-size: 12px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
 
+        /* Estilos del Tablero GUI */
         #grid { 
             display: grid; 
-            gap: 4px; 
-            background: #222; 
+            gap: 2px; 
+            background: #1a1b26; 
             padding: 6px; 
             border-radius: 6px; 
             width: 100%; 
-            max-width: 340px; 
+            max-width: 360px; 
             aspect-ratio: 1; 
             border: 1px solid #333;
         }
 
         .cell { 
-            background: #2d2d2d; 
-            border-radius: 4px; 
+            background: #282a36; 
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 2px; 
             position: relative; 
             display: flex; 
             flex-wrap: wrap; 
             align-content: center; 
             justify-content: center; 
-            gap: 2px; 
+            gap: 4px; 
             padding: 2px;
             overflow: hidden;
         }
 
-        .guerrero-cell {
-            border: 2px solid #ff9900 !important;
-            background-color: #3a3a2a !important;
+        .cell-coord {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 8px;
+            color: #555;
+            pointer-events: none;
         }
 
-        .badge {
-            font-size: 10px;
-            padding: 1px 3px;
-            border-radius: 3px;
+        .guerrero-cell {
+            border: 2px solid #50fa7b !important;
+            background-color: #21332a !important;
+        }
+
+        .guerrero-tag {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 9px;
+            color: #50fa7b;
+            font-weight: bold;
+        }
+
+        /* Estilo visual fiel de las Esferas del Dragón */
+        .esfera-orb {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffcc00, #ff6600);
+            box-shadow: 0 0 6px rgba(255, 102, 0, 0.8), inset -2px -2px 4px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #8b0000;
+            font-weight: bold;
+            font-size: 11px;
+            border: 1px solid #ffaa00;
+            user-select: none;
+        }
+
+        /* Barra de Controles */
+        .controls-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            background: #1e1e1e;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+
+        .controls-bar button {
+            padding: 6px 10px;
+            font-size: 12px;
             background: #333;
             color: #fff;
-            display: inline-flex;
+            border: 1px solid #555;
+            border-radius: 4px;
+            width: auto;
+        }
+
+        .controls-bar button:hover {
+            background: #444;
+        }
+
+        .slider-container {
+            display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 6px;
+            flex: 1;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .slider-container input {
+            flex: 1;
         }
     </style>
 </head>
@@ -93,6 +158,16 @@ MOSTRAR_TABLERO()
         <div class="board-section">
             <h3 style="margin: 0; color: #ff9900;">Tablero GUI Web</h3>
             <div id="grid"></div>
+
+            <!-- Controles del Tablero -->
+            <div class="controls-bar">
+                <button id="pause-btn" onclick="togglePausa()">⏸ Pausa</button>
+                <button id="reset-btn" onclick="resetTablero()">🔄 Reset</button>
+                <div class="slider-container">
+                    <span>Velocidad:</span>
+                    <input type="range" id="speed-slider" min="50" max="1000" value="300" step="50" onchange="actualizarVelocidad(this.value)">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -100,22 +175,57 @@ MOSTRAR_TABLERO()
         let pyodide;
         let pasotableroQueue = [];
         let animandoTablero = false;
+        let enPausa = false;
+        let velocidadAnimacion = 300;
+        let ultimoEstadoTablero = null;
 
         const ESTRELLAS_MAP = {
-            "ESFERA_1": "1⭐",
-            "ESFERA_2": "2⭐",
-            "ESFERA_3": "3⭐",
-            "ESFERA_4": "4⭐"
+            "ESFERA_1": "1★",
+            "ESFERA_2": "2★",
+            "ESFERA_3": "3★",
+            "ESFERA_4": "4★",
+            "ESFERA_5": "5★",
+            "ESFERA_6": "6★",
+            "ESFERA_7": "7★"
         };
 
         window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
-            pasotableroQueue.push({ ancho, alto, posX, posY, celdasJson });
+            ultimoEstadoTablero = { ancho, alto, posX, posY, celdasJson };
+            pasotableroQueue.push(ultimoEstadoTablero);
             if (!animandoTablero) {
                 procesarColaAnimacion();
             }
         };
 
+        function togglePausa() {
+            enPausa = !enPausa;
+            const btn = document.getElementById("pause-btn");
+            btn.innerText = enPausa ? "▶ Reanudar" : "⏸ Pausa";
+            if (!enPausa && pasotableroQueue.length > 0) {
+                procesarColaAnimacion();
+            }
+        }
+
+        function resetTablero() {
+            pasotableroQueue = [];
+            animandoTablero = false;
+            enPausa = false;
+            document.getElementById("pause-btn").innerText = "⏸ Pausa";
+            
+            if (ultimoEstadoTablero) {
+                // Reiniciar visualmente al tamaño del último tablero con celdas vacías y guerrero en (0,0)
+                renderizarFrameTablero(ultimoEstadoTablero.ancho, ultimoEstadoTablero.alto, 0, 0, "{}");
+            }
+        }
+
+        function actualizarVelocidad(val) {
+            // Invertimos la escala: valor alto en slider = menor delay
+            velocidadAnimacion = 1050 - parseInt(val);
+        }
+
         function procesarColaAnimacion() {
+            if (enPausa) return;
+
             if (pasotableroQueue.length === 0) {
                 animandoTablero = false;
                 return;
@@ -124,7 +234,7 @@ MOSTRAR_TABLERO()
             animandoTablero = true;
             const estado = pasotableroQueue.shift();
             renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
-            setTimeout(procesarColaAnimacion, 300);
+            setTimeout(procesarColaAnimacion, velocidadAnimacion);
         }
 
         function renderizarFrameTablero(ancho, alto, posX, posY, celdasJson) {
@@ -142,12 +252,17 @@ MOSTRAR_TABLERO()
                     const cell = document.createElement("div");
                     cell.className = "cell";
 
+                    const coord = document.createElement("span");
+                    coord.className = "cell-coord";
+                    coord.innerText = `(${c},${r})`;
+                    cell.appendChild(coord);
+
                     if (c === posX && r === posY) {
                         cell.classList.add("guerrero-cell");
-                        const guerreroTag = document.createElement("span");
-                        guerreroTag.style.fontSize = "14px";
-                        guerreroTag.innerText = "🥋";
-                        cell.appendChild(guerreroTag);
+                        const tag = document.createElement("span");
+                        tag.className = "guerrero-tag";
+                        tag.innerText = "GUERRERO";
+                        cell.appendChild(tag);
                     }
 
                     const key = `(${c}, ${r})`;
@@ -155,11 +270,11 @@ MOSTRAR_TABLERO()
 
                     for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
                         if (cantidad > 0) {
-                            const badge = document.createElement("span");
-                            badge.className = "badge";
+                            const orb = document.createElement("div");
+                            orb.className = "esfera-orb";
                             const estrellas = ESTRELLAS_MAP[esfera] || esfera;
-                            badge.innerText = `🟠${estrellas}${cantidad > 1 ? ' x' + cantidad : ''}`;
-                            cell.appendChild(badge);
+                            orb.innerText = cantidad > 1 ? `${cantidad}x${estrellas}` : estrellas;
+                            cell.appendChild(orb);
                         }
                     }
 
@@ -187,15 +302,26 @@ MOSTRAR_TABLERO()
                     pyodide.FS.writeFile(`/target/dragonscript/${filename}`, content);
                 }
 
+                // Carga del interprete e integración automática de la Biblioteca Estándar (stdlib.ds)
                 await pyodide.runPythonAsync(`
 import sys
+import os
 sys.path.append('/target')
 from dragonscript.lexer import Lexer
 from dragonscript.parser import Parser
 from dragonscript.interpreter import Interpreter
 
-def execute_dragonscript(code):
-    tokens = Lexer(code).tokenize()
+def execute_dragonscript(user_code):
+    # Cargar Biblioteca si existe
+    stdlib_path = '/target/dragonscript/stdlib.ds'
+    full_code = ""
+    if os.path.exists(stdlib_path):
+        with open(stdlib_path, 'r', encoding='utf-8') as f:
+            full_code += f.read() + "\\n"
+    
+    full_code += user_code
+
+    tokens = Lexer(full_code).tokenize()
     ast = Parser(tokens).parse()
     Interpreter().interpret(ast)
 `);
@@ -216,6 +342,8 @@ def execute_dragonscript(code):
 
             pasotableroQueue = [];
             animandoTablero = false;
+            enPausa = false;
+            document.getElementById("pause-btn").innerText = "⏸ Pausa";
 
             btn.disabled = true;
             btn.innerText = "Ejecutando...";
