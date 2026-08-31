@@ -6,6 +6,11 @@
     <title>DragonScript Web Playground 🐉</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <script src="dragonscript_engine.js"></script>
+    
+    <!-- CodeJar y Prism.js para resaltado de sintaxis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codejar/1.1.0/codejar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    
     <style>
         * { box-sizing: border-box; }
         body { font-family: monospace; background-color: #121212; color: #fff; margin: 0; padding: 15px; }
@@ -23,7 +28,7 @@
             .board-section { width: 360px; }
         }
 
-        /* Sistema de Pestañas estilo Gobstones Web */
+        /* Pestañas */
         .tabs { display: flex; gap: 5px; border-bottom: 2px solid #333; }
         .tab-btn {
             background: #222;
@@ -37,125 +42,75 @@
             border-radius: 6px 6px 0 0;
             width: auto;
         }
-        .tab-btn.active {
-            background: #ff9900;
-            color: #000;
-            border-color: #ff9900;
-        }
+        .tab-btn.active { background: #ff9900; color: #000; border-color: #ff9900; }
 
-        .tab-content { display: none; flex: 1; flex-direction: column; }
+        .tab-content { display: none; flex: 1; flex-direction: column; position: relative; }
         .tab-content.active { display: flex; }
 
-        textarea { width: 100%; flex: 1; min-height: 180px; background: #1e1e1e; color: #d4d4d4; font-size: 14px; padding: 10px; border: 1px solid #333; border-radius: 0 0 6px 6px; resize: none; }
-        button { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
-        button:disabled { background: #444; color: #888; cursor: not-allowed; }
-        #output { width: 100%; height: 140px; background: #000; color: #00ff00; font-size: 12px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
-
-        /* Estilos del Tablero GUI */
-        #grid { 
-            display: grid; 
-            gap: 2px; 
-            background: #1a1b26; 
-            padding: 6px; 
-            border-radius: 6px; 
-            width: 100%; 
-            max-width: 360px; 
-            aspect-ratio: 1; 
-            border: 1px solid #333;
-        }
-
-        .cell { 
-            background: #282a36; 
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 2px; 
-            position: relative; 
-            display: flex; 
-            flex-wrap: wrap; 
-            align-content: center; 
-            justify-content: center; 
-            gap: 4px; 
-            padding: 2px;
-            overflow: hidden;
-        }
-
-        .cell-coord {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            font-size: 8px;
-            color: #555;
-            pointer-events: none;
-        }
-
-        .guerrero-cell {
-            border: 2px solid #50fa7b !important;
-            background-color: #21332a !important;
-        }
-
-        .guerrero-tag {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            font-size: 9px;
-            color: #50fa7b;
-            font-weight: bold;
-        }
-
-        /* Esferas grandes */
-        .esfera-orb {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, #ffcc00, #ff6600);
-            box-shadow: 0 0 6px rgba(255, 102, 0, 0.8), inset -2px -2px 4px rgba(0,0,0,0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #8b0000;
-            font-weight: bold;
-            font-size: 11px;
-            border: 1px solid #ffaa00;
-            user-select: none;
-        }
-
-        /* Barra de Controles */
-        .controls-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        /* Contenedor de Editor con CodeJar */
+        .editor-container {
             width: 100%;
+            flex: 1;
+            min-height: 220px;
             background: #1e1e1e;
-            padding: 8px;
-            border-radius: 6px;
+            color: #d4d4d4;
+            font-family: monospace;
+            font-size: 14px;
+            padding: 10px;
             border: 1px solid #333;
+            border-radius: 0 0 6px 6px;
+            overflow: auto;
+            white-space: pre;
+            outline: none;
         }
 
-        .controls-bar button {
-            padding: 6px 10px;
-            font-size: 12px;
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 4px;
-            width: auto;
-        }
-
-        .controls-bar button:hover {
-            background: #444;
-        }
-
-        .slider-container {
+        /* Barra de herramientas para importar/exportar */
+        .file-toolbar {
             display: flex;
-            align-items: center;
             gap: 6px;
-            flex: 1;
-            font-size: 12px;
+            background: #181818;
+            padding: 6px;
+            border: 1px solid #333;
+            border-bottom: none;
+        }
+        .file-toolbar button, .file-toolbar label {
+            background: #2a2a2a;
             color: #ccc;
+            font-size: 11px;
+            padding: 4px 8px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
         }
+        .file-toolbar button:hover, .file-toolbar label:hover { background: #3a3a3a; color: #fff; }
 
-        .slider-container input {
-            flex: 1;
-        }
+        button.action-btn { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
+        button.action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+        
+        #output { width: 100%; height: 130px; background: #000; color: #00ff00; font-size: 12px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
+
+        /* Estilos Tablero */
+        #grid { display: grid; gap: 2px; background: #1a1b26; padding: 6px; border-radius: 6px; width: 100%; max-width: 360px; aspect-ratio: 1; border: 1px solid #333; }
+        .cell { background: #282a36; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2px; position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 4px; padding: 2px; overflow: hidden; }
+        .cell-coord { position: absolute; top: 2px; left: 2px; font-size: 8px; color: #555; pointer-events: none; }
+        .guerrero-cell { border: 2px solid #50fa7b !important; background-color: #21332a !important; }
+        .guerrero-tag { position: absolute; top: 2px; right: 2px; font-size: 9px; color: #50fa7b; font-weight: bold; }
+        .esfera-orb { width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffcc00, #ff6600); box-shadow: 0 0 6px rgba(255, 102, 0, 0.8), inset -2px -2px 4px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #8b0000; font-weight: bold; font-size: 11px; border: 1px solid #ffaa00; user-select: none; }
+
+        .controls-bar { display: flex; align-items: center; gap: 8px; width: 100%; background: #1e1e1e; padding: 8px; border-radius: 6px; border: 1px solid #333; }
+        .controls-bar button { padding: 6px 10px; font-size: 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; width: auto; }
+        .slider-container { display: flex; align-items: center; gap: 6px; flex: 1; font-size: 12px; color: #ccc; }
+        .slider-container input { flex: 1; }
+
+        /* Colores del Syntax Highlighting */
+        .token.comment { color: #6272a4; font-style: italic; }
+        .token.keyword { color: #ff79c6; font-weight: bold; }
+        .token.command { color: #50fa7b; font-weight: bold; }
+        .token.constant { color: #bd93f9; }
+        .token.number { color: #bd93f9; }
+        .token.string { color: #f1fa8c; }
     </style>
 </head>
 <body>
@@ -165,37 +120,29 @@
 
     <div class="main-layout">
         <div class="editor-section">
-            <!-- Pestañas estilo Gobstones -->
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('program')">📄 Programa</button>
                 <button class="tab-btn" onclick="switchTab('library')">📚 Biblioteca</button>
             </div>
 
-            <!-- Editor Principal -->
+            <!-- Toolbar de archivos -->
+            <div class="file-toolbar">
+                <label for="file-input">📥 Cargar Archivo (.ds)</label>
+                <input type="file" id="file-input" accept=".ds,.txt" style="display:none;" onchange="cargarArchivo(event)">
+                <button onclick="guardarArchivo()">Exportar (.ds) 💾</button>
+            </div>
+
+            <!-- Editor Programa -->
             <div id="tab-program" class="tab-content active">
-                <textarea id="code" placeholder="Escribí tu programa principal aquí...">
-INICIAR_TABLERO(4, 4)
-
-// Llamamos al procedimiento declarado en la pestaña Biblioteca
-MoverYRecoger(ESTE, ESFERA_1)
-MoverYRecoger(NORTE, ESFERA_7)
-
-MOSTRAR_TABLERO()
-                </textarea>
+                <div id="editor-program" class="editor-container"></div>
             </div>
 
-            <!-- Editor de Biblioteca -->
+            <!-- Editor Biblioteca -->
             <div id="tab-library" class="tab-content">
-                <textarea id="library-code" placeholder="Escribí tus procedimientos de la biblioteca aquí...">
-// Biblioteca Gobstones-style
-ROSHI MoverYRecoger(direccion, esfera) {
-    VOLAR(direccion)
-    CARGAR(esfera)
-}
-                </textarea>
+                <div id="editor-library" class="editor-container"></div>
             </div>
 
-            <button id="run-btn" onclick="runCode()" disabled>Cargando entorno...</button>
+            <button id="run-btn" class="action-btn" onclick="runCode()" disabled>Cargando entorno...</button>
             <div id="output">Consola de salida...</div>
         </div>
 
@@ -221,18 +168,48 @@ ROSHI MoverYRecoger(direccion, esfera) {
         let enPausa = false;
         let velocidadAnimacion = 300;
         let ultimoEstadoTablero = null;
+        let activeTab = 'program';
+
+        let jarProgram, jarLibrary;
 
         const ESTRELLAS_MAP = {
-            "ESFERA_1": "1★",
-            "ESFERA_2": "2★",
-            "ESFERA_3": "3★",
-            "ESFERA_4": "4★",
-            "ESFERA_5": "5★",
-            "ESFERA_6": "6★",
-            "ESFERA_7": "7★"
+            "ESFERA_1": "1★", "ESFERA_2": "2★", "ESFERA_3": "3★",
+            "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
         };
 
+        // Reglas de Highlighting para DragonScript
+        Prism.languages.dragonscript = {
+            'comment': /#.*/,
+            'keyword': /\b(ROSHI|SAYAYIN|SI|SINO|MIENTRAS|RETORNAR|PROGRAMA)\b/,
+            'command': /\b(INICIAR_TABLERO|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO)\b/,
+            'constant': /\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7)\b/,
+            'number': /\b\d+\b/,
+            'string': /"[^"]*"/
+        };
+
+        const highlightCode = editor => {
+            Prism.highlightElement(editor);
+        };
+
+        function initEditors() {
+            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(4, 4)\n\n# Llamada a la biblioteca\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
+            const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca de Funciones\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
+
+            const elProg = document.getElementById("editor-program");
+            const elLib = document.getElementById("editor-library");
+
+            elProg.textContent = defaultProgram;
+            elLib.textContent = defaultLibrary;
+
+            jarProgram = CodeJar(elProg, highlightCode);
+            jarLibrary = CodeJar(elLib, highlightCode);
+
+            jarProgram.onUpdate(code => localStorage.setItem("ds_program", code));
+            jarLibrary.onUpdate(code => localStorage.setItem("ds_library", code));
+        }
+
         function switchTab(tabName) {
+            activeTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
@@ -245,21 +222,48 @@ ROSHI MoverYRecoger(direccion, esfera) {
             }
         }
 
+        // Cargar archivo local .ds
+        function cargarArchivo(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const content = evt.target.result;
+                if (activeTab === 'program') {
+                    jarProgram.updateCode(content);
+                    localStorage.setItem("ds_program", content);
+                } else {
+                    jarLibrary.updateCode(content);
+                    localStorage.setItem("ds_library", content);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        // Exportar archivo .ds
+        function guardarArchivo() {
+            const content = activeTab === 'program' ? jarProgram.toString() : jarLibrary.toString();
+            const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
+            
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            a.click();
+        }
+
         window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
             ultimoEstadoTablero = { ancho, alto, posX, posY, celdasJson };
             pasotableroQueue.push(ultimoEstadoTablero);
-            if (!animandoTablero) {
-                procesarColaAnimacion();
-            }
+            if (!animandoTablero) procesarColaAnimacion();
         };
 
         function togglePausa() {
             enPausa = !enPausa;
-            const btn = document.getElementById("pause-btn");
-            btn.innerText = enPausa ? "▶ Reanudar" : "⏸ Pausa";
-            if (!enPausa && pasotableroQueue.length > 0) {
-                procesarColaAnimacion();
-            }
+            document.getElementById("pause-btn").innerText = enPausa ? "▶ Reanudar" : "⏸ Pausa";
+            if (!enPausa && pasotableroQueue.length > 0) procesarColaAnimacion();
         }
 
         function resetTablero() {
@@ -272,18 +276,14 @@ ROSHI MoverYRecoger(direccion, esfera) {
             }
         }
 
-        function actualizarVelocidad(val) {
-            velocidadAnimacion = 1050 - parseInt(val);
-        }
+        function actualizarVelocidad(val) { velocidadAnimacion = 1050 - parseInt(val); }
 
         function procesarColaAnimacion() {
             if (enPausa) return;
-
             if (pasotableroQueue.length === 0) {
                 animandoTablero = false;
                 return;
             }
-
             animandoTablero = true;
             const estado = pasotableroQueue.shift();
             renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
@@ -337,6 +337,7 @@ ROSHI MoverYRecoger(direccion, esfera) {
         }
 
         async function init() {
+            initEditors();
             const status = document.getElementById("status");
             const btn = document.getElementById("run-btn");
             const output = document.getElementById("output");
@@ -378,8 +379,8 @@ def execute_dragonscript(user_code, lib_code):
         }
 
         async function runCode() {
-            const code = document.getElementById("code").value;
-            const libCode = document.getElementById("library-code").value;
+            const code = jarProgram.toString();
+            const libCode = jarLibrary.toString();
             const output = document.getElementById("output");
             const btn = document.getElementById("run-btn");
             output.innerText = "";
