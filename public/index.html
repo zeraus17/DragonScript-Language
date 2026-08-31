@@ -6,7 +6,6 @@
     <title>DragonScript Web Playground 🐉</title>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <script src="dragonscript_engine.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codejar/1.1.0/codejar.min.js"></script>
     
     <style>
         * { box-sizing: border-box; }
@@ -44,20 +43,20 @@
         .tab-content { display: none; flex: 1; flex-direction: column; position: relative; }
         .tab-content.active { display: flex; }
 
-        /* Contenedor de Editor */
-        .editor-container {
+        /* Textarea de Código Nativo */
+        .code-textarea {
             width: 100%;
             flex: 1;
             min-height: 220px;
             background: #1e1e1e;
-            color: #d4d4d4;
-            font-family: monospace;
+            color: #50fa7b;
+            font-family: 'Courier New', Courier, monospace;
             font-size: 14px;
+            line-height: 1.4;
             padding: 10px;
             border: 1px solid #333;
             border-radius: 0 0 6px 6px;
-            overflow: auto;
-            white-space: pre;
+            resize: none;
             outline: none;
         }
 
@@ -100,13 +99,6 @@
         .controls-bar button { padding: 6px 10px; font-size: 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; width: auto; }
         .slider-container { display: flex; align-items: center; gap: 6px; flex: 1; font-size: 12px; color: #ccc; }
         .slider-container input { flex: 1; }
-
-        /* Syntax Highlighting Colors */
-        .hl-comment { color: #6272a4; font-style: italic; }
-        .hl-keyword { color: #ff79c6; font-weight: bold; }
-        .hl-command { color: #50fa7b; font-weight: bold; }
-        .hl-constant { color: #bd93f9; }
-        .hl-number { color: #bd93f9; }
     </style>
 </head>
 <body>
@@ -128,11 +120,11 @@
             </div>
 
             <div id="tab-program" class="tab-content active">
-                <div id="editor-program" class="editor-container"></div>
+                <textarea id="editor-program" class="code-textarea" spellcheck="false"></textarea>
             </div>
 
             <div id="tab-library" class="tab-content">
-                <div id="editor-library" class="editor-container"></div>
+                <textarea id="editor-library" class="code-textarea" spellcheck="false"></textarea>
             </div>
 
             <button id="run-btn" class="action-btn" onclick="runCode()" disabled>Cargando entorno...</button>
@@ -163,31 +155,9 @@
         let ultimoEstadoTablero = null;
         let activeTab = 'program';
 
-        let jarProgram, jarLibrary;
-
         const ESTRELLAS_MAP = {
             "ESFERA_1": "1★", "ESFERA_2": "2★", "ESFERA_3": "3★",
             "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
-        };
-
-        // Resaltador de sintaxis liviano sin dependencias
-        const highlightDragonScript = editor => {
-            let text = editor.textContent;
-            
-            // Reemplazo seguro de entidades HTML
-            let html = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-
-            // Palabras clave y comandos
-            html = html.replace(/(#.*)/g, '<span class="hl-comment">$1</span>')
-                .replace(/\b(ROSHI|SAYAYIN|SI|SINO|MIENTRAS|RETORNAR|PROGRAMA)\b/g, '<span class="hl-keyword">$1</span>')
-                .replace(/\b(INICIAR_TABLERO|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO)\b/g, '<span class="hl-command">$1</span>')
-                .replace(/\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7)\b/g, '<span class="hl-constant">$1</span>')
-                .replace(/\b(\d+)\b/g, '<span class="hl-number">$1</span>');
-
-            editor.innerHTML = html;
         };
 
         function initEditors() {
@@ -197,14 +167,11 @@
             const elProg = document.getElementById("editor-program");
             const elLib = document.getElementById("editor-library");
 
-            elProg.textContent = defaultProgram;
-            elLib.textContent = defaultLibrary;
+            elProg.value = defaultProgram;
+            elLib.value = defaultLibrary;
 
-            jarProgram = CodeJar(elProg, highlightDragonScript);
-            jarLibrary = CodeJar(elLib, highlightDragonScript);
-
-            jarProgram.onUpdate(code => localStorage.setItem("ds_program", code));
-            jarLibrary.onUpdate(code => localStorage.setItem("ds_library", code));
+            elProg.addEventListener("input", () => localStorage.setItem("ds_program", elProg.value));
+            elLib.addEventListener("input", () => localStorage.setItem("ds_library", elLib.value));
         }
 
         function switchTab(tabName) {
@@ -229,10 +196,10 @@
             reader.onload = function(evt) {
                 const content = evt.target.result;
                 if (activeTab === 'program') {
-                    jarProgram.updateCode(content);
+                    document.getElementById("editor-program").value = content;
                     localStorage.setItem("ds_program", content);
                 } else {
-                    jarLibrary.updateCode(content);
+                    document.getElementById("editor-library").value = content;
                     localStorage.setItem("ds_library", content);
                 }
             };
@@ -241,7 +208,8 @@
         }
 
         function guardarArchivo() {
-            const content = activeTab === 'program' ? jarProgram.toString() : jarLibrary.toString();
+            const el = activeTab === 'program' ? document.getElementById("editor-program") : document.getElementById("editor-library");
+            const content = el.value;
             const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
             
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -349,8 +317,10 @@
                 pyodide.FS.mkdir('/target');
                 pyodide.FS.mkdir('/target/dragonscript');
                 
-                for (const [filename, content] of Object.entries(window.DRAGONSCRIPT_FILES)) {
-                    pyodide.FS.writeFile(`/target/dragonscript/${filename}`, content);
+                if (window.DRAGONSCRIPT_FILES) {
+                    for (const [filename, content] of Object.entries(window.DRAGONSCRIPT_FILES)) {
+                        pyodide.FS.writeFile(`/target/dragonscript/${filename}`, content);
+                    }
                 }
 
                 await pyodide.runPythonAsync(`
@@ -376,8 +346,8 @@ def execute_dragonscript(user_code, lib_code):
         }
 
         async function runCode() {
-            const code = jarProgram.toString();
-            const libCode = jarLibrary.toString();
+            const code = document.getElementById("editor-program").value;
+            const libCode = document.getElementById("editor-library").value;
             const output = document.getElementById("output");
             const btn = document.getElementById("run-btn");
             output.innerText = "";
@@ -402,7 +372,7 @@ def execute_dragonscript(user_code, lib_code):
             }
         }
 
-        init();
+        window.addEventListener("DOMContentLoaded", init);
     </script>
 </body>
 </html>
