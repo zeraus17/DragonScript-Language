@@ -207,26 +207,26 @@
             "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
         };
 
-        // Resaltador de Sintaxis Regex seguro
-        function highlightCode(src) {
-            let escaped = src
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+        // Resaltador de Sintaxis con todas las palabras reservadas de DragonScript
+function highlightCode(src) {
+    let escaped = src
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 
-            return escaped.replace(
-                /(#[^\n]*)|("[^"]*")|\b(ROSHI|SAYAYIN|SI|SINO|MIENTRAS|RETORNAR|PROGRAMA)\b|\b(INICIAR_TABLERO|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO)\b|\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7)\b|\b(\d+)\b/g,
-                (match, comment, str, keyword, command, constant, number) => {
-                    if (comment) return `<span class="hl-comment">${comment}</span>`;
-                    if (str) return `<span class="hl-string">${str}</span>`;
-                    if (keyword) return `<span class="hl-keyword">${keyword}</span>`;
-                    if (command) return `<span class="hl-command">${command}</span>`;
-                    if (constant) return `<span class="hl-constant">${constant}</span>`;
-                    if (number) return `<span class="hl-number">${number}</span>`;
-                    return match;
-                }
-            ) + (src.endsWith('\n') ? ' ' : '');
+    return escaped.replace(
+        /(#[^\n]*)|("[^"]*")|\b(PROGRAMA|ROSHI|GOKU|KAIOSHIN|SAYAYIN|SI_HAY|SINO|MIENTRAS|RETORNAR)\b|\b(INICIAR_TABLERO|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO)\b|\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7)\b|\b(\d+)\b/g,
+        (match, comment, str, keyword, command, constant, number) => {
+            if (comment) return `<span class="hl-comment">${comment}</span>`;     // Verde comentarios
+            if (str) return `<span class="hl-string">${str}</span>`;             // Naranja strings
+            if (keyword) return `<span class="hl-keyword">${keyword}</span>`;         // Púrpura (ROSHI, GOKU, KAIOSHIN, PROGRAMA, etc.)
+            if (command) return `<span class="hl-command">${command}</span>`;         // Amarillo (VOLAR, CARGAR, DRENAR, etc.)
+            if (constant) return `<span class="hl-constant">${constant}</span>`;     // Azul (NORTE, SUR, ESFERA_1, etc.)
+            if (number) return `<span class="hl-number">${number}</span>`;         // Verde claro números
+            return match;
         }
+    ) + (src.endsWith('\n') ? ' ' : '');
+}
 
         function updateHighlight(tab) {
             const tx = document.getElementById(`tx-${tab}`);
