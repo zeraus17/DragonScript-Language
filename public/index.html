@@ -82,8 +82,10 @@
             line-height: 1.5;
             white-space: pre-wrap;
             word-wrap: break-word;
+            word-break: break-word;
             tab-size: 4;
             box-sizing: border-box;
+            overflow: auto;
         }
 
         .editor-textarea {
@@ -93,6 +95,12 @@
             caret-color: #00ff00; /* Color del cursor */
             resize: none;
             outline: none;
+            border: 1px solid transparent;
+        }
+
+        .editor-textarea:focus {
+            border-color: rgba(255, 153, 0, 0.7);
+            box-shadow: inset 0 0 0 1px rgba(255, 153, 0, 0.15);
         }
 
         .editor-highlight {
@@ -100,16 +108,71 @@
             color: #d4d4d4;
             pointer-events: none;
             overflow: hidden;
+            background: #1e1e1e;
+        }
+
+        .editor-textarea::selection {
+            background: rgba(80, 250, 123, 0.3);
+        }
+
+        .editor-textarea::-webkit-scrollbar,
+        .editor-highlight::-webkit-scrollbar,
+        .autocomplete-list::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .editor-textarea::-webkit-scrollbar-thumb,
+        .editor-highlight::-webkit-scrollbar-thumb,
+        .autocomplete-list::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 8px;
+        }
+
+        .autocomplete-list {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 8px;
+            max-height: 160px;
+            overflow-y: auto;
+            background: rgba(20, 20, 20, 0.96);
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+            display: none;
+            z-index: 5;
+        }
+
+        .autocomplete-item {
+            padding: 6px 10px;
+            font-size: 12px;
+            color: #d4d4d4;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background: #2a3d5a;
+            color: #fff;
         }
 
         /* PALETA COLORES VS CODE */
-        .hl-comment  { color: #6A9955; font-style: italic; } /* Verde Comentarios */
-        .hl-keyword  { color: #C586C0; font-weight: bold; }  /* Magenta E. Control */
-        .hl-routine  { color: #4EC9B0; font-weight: bold; }  /* Turquesa ROSHI/GOKU */
-        .hl-command  { color: #DCDCAA; font-weight: bold; }  /* Amarillo Comandos */
-        .hl-constant { color: #4FC1FF; }                                /* Azul Constantes */
-        .hl-number   { color: #B5CEA8; }                                /* Verde Claro Números */
-        .hl-string   { color: #CE9178; }                                /* Naranja Textos */
+        .hl-comment  { color: #6A9955; font-style: italic; }
+        .hl-keyword  { color: #C586C0; font-weight: 700; }
+        .hl-routine  { color: #4EC9B0; font-weight: 700; }
+        .hl-command  { color: #DCDCAA; font-weight: 700; }
+        .hl-constant { color: #4FC1FF; }
+        .hl-number   { color: #B5CEA8; }
+        .hl-string   { color: #CE9178; }
+        .hl-identifier { color: #9CDCFE; }
+        .hl-operator { color: #D4D4D4; }
+
+        .hl-comment, .hl-keyword, .hl-routine, .hl-command, .hl-constant,
+        .hl-number, .hl-string, .hl-identifier, .hl-operator {
+            text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        }
 
         button.action-btn { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
         button.action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
@@ -152,6 +215,7 @@
                 <div class="editor-wrapper">
                     <pre class="editor-highlight" id="hl-program"></pre>
                     <textarea class="editor-textarea" id="tx-program" spellcheck="false" oninput="updateEditor('program')" onscroll="syncScroll('program')"></textarea>
+                    <div class="autocomplete-list" id="autocomplete-program"></div>
                 </div>
             </div>
 
@@ -159,6 +223,7 @@
                 <div class="editor-wrapper">
                     <pre class="editor-highlight" id="hl-library"></pre>
                     <textarea class="editor-textarea" id="tx-library" spellcheck="false" oninput="updateEditor('library')" onscroll="syncScroll('library')"></textarea>
+                    <div class="autocomplete-list" id="autocomplete-library"></div>
                 </div>
             </div>
 
@@ -195,25 +260,172 @@
             "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
         };
 
-        function highlightSyntax(text) {
-            let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            
-            // Añadimos espacio extra si termina en salto de línea para alineación de scroll
-            if (escaped.endsWith('\n')) escaped += ' ';
+        const DRAGON_KEYWORDS = [
+            "PROGRAMA", "KI", "SCOUTER", "ROSHI", "SENSAR", "ESQUIVAR", "ENTRENAR",
+            "RASTREAR", "EN", "GRAVEDAD", "TECNICA", "TRANSMITIR", "FUSION",
+            "DESEO", "INVERTIR", "CANON", "RELLENO", "VACIO", "CAPSULA", "ACTIVAR",
+            "EVOLUCIONA", "LEGENDARIO", "SI", "SINO", "MIENTRAS", "REPETIR",
+            "RETORNAR", "IF", "ELSE", "WHILE", "FOREACH", "GRAVITY", "TECHNIQUE",
+            "RETURN", "AND", "OR", "NOT", "TRUE", "FALSE", "NULL", "WARRIOR",
+            "CREATE", "EVOLVES", "STATIC", "VOLAR", "CARGAR", "DRENAR",
+            "MOSTRAR_TABLERO", "INICIAR_TABLERO", "NUBE_KINTON", "PUEDE_VOLAR",
+            "HAY_ESFERA", "CANTIDAD_ESFERAS", "OPUESTO", "IGUAL", "DIFERENTE",
+            "VERDADERO", "FALSO", "NORTE", "SUR", "ESTE", "OESTE", "GOKU",
+            "KAIOSHIN", "ROSHI", "MOVER", "IR", "PONER", "MOVER_N", "PONER_N",
+            "DRENAR_N", "IR_AL_ORIGEN", "ESPERAR"
+        ];
 
-            return escaped.replace(
-                /(#[^\n]*)|("[^"]*")|\b(PROGRAMA|SI_HAY|SI|SINO|MIENTRAS|REPETIR|RETORNAR)\b|\b(ROSHI|KAIOSHIN|GOKU)\b|\b(INICIAR_TABLERO|VOLAR|NUBE_KINTON|CARGAR|DRENAR|MOSTRAR_TABLERO|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE)\b|\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7|VERDADERO|FALSO)\b|\b(\d+)\b/g,
-                (m, comment, str, keyword, routine, command, constant, number) => {
-                    if (comment)  return `<span class="hl-comment">${comment}</span>`;
-                    if (str)      return `<span class="hl-string">${str}</span>`;
-                    if (keyword)  return `<span class="hl-keyword">${keyword}</span>`;
-                    if (routine)  return `<span class="hl-routine">${routine}</span>`;
-                    if (command)  return `<span class="hl-command">${command}</span>`;
-                    if (constant) return `<span class="hl-constant">${constant}</span>`;
-                    if (number)   return `<span class="hl-number">${number}</span>`;
-                    return m;
+        const AUTOCOMPLETE_STATE = {};
+
+        function getAutocompleteWordAtCursor(text, cursorPos) {
+            let start = cursorPos;
+            while (start > 0 && /[A-Za-z_0-9]/.test(text[start - 1])) start--;
+            let end = cursorPos;
+            while (end < text.length && /[A-Za-z_0-9]/.test(text[end])) end++;
+            return { start, end, word: text.slice(start, end) };
+        }
+
+        function getIdentifiersFromText(text) {
+            const matches = text.match(/[A-Za-z_][A-Za-z0-9_]*/g) || [];
+            const seen = new Set();
+            const ids = [];
+
+            matches.forEach(name => {
+                const upper = name.toUpperCase();
+                if (!seen.has(name) && !DRAGON_KEYWORDS.some(keyword => keyword.toLowerCase() === name.toLowerCase())) {
+                    seen.add(name);
+                    ids.push(name);
                 }
+            });
+
+            return ids;
+        }
+
+        function getAutocompleteSuggestions(word, text = '') {
+            if (!word || word.length < 2) return [];
+            const lower = word.toLowerCase();
+            const keywordSuggestions = DRAGON_KEYWORDS.filter(item =>
+                item.toLowerCase().startsWith(lower) && item.toLowerCase() !== lower
             );
+            const customSuggestions = getIdentifiersFromText(text).filter(item =>
+                item.toLowerCase().startsWith(lower) && item.toLowerCase() !== lower
+            );
+            return [...new Set([...keywordSuggestions, ...customSuggestions])].slice(0, 10);
+        }
+
+        function hideAutocomplete(tab) {
+            const list = document.getElementById(`autocomplete-${tab}`);
+            if (list) {
+                list.innerHTML = "";
+                list.style.display = 'none';
+            }
+            AUTOCOMPLETE_STATE[tab] = null;
+        }
+
+        function applyAutocompleteSuggestion(tab, suggestion) {
+            const textarea = document.getElementById(`tx-${tab}`);
+            const value = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            const { start, end } = getAutocompleteWordAtCursor(value, cursorPos);
+            const nextValue = value.slice(0, start) + suggestion + value.slice(end);
+            textarea.value = nextValue;
+            textarea.selectionStart = textarea.selectionEnd = start + suggestion.length;
+            updateEditor(tab);
+            hideAutocomplete(tab);
+        }
+
+        function renderAutocomplete(tab, text, cursorPos) {
+            const { start, end, word } = getAutocompleteWordAtCursor(text, cursorPos);
+            const suggestions = getAutocompleteSuggestions(word, text);
+            const list = document.getElementById(`autocomplete-${tab}`);
+
+            if (!suggestions.length || !word) {
+                hideAutocomplete(tab);
+                return;
+            }
+
+            const activeIndex = AUTOCOMPLETE_STATE[tab]?.index ?? 0;
+            AUTOCOMPLETE_STATE[tab] = { suggestions, index: Math.min(activeIndex, suggestions.length - 1) };
+
+            list.innerHTML = suggestions.map((item, index) => `
+                <div class="autocomplete-item ${index === AUTOCOMPLETE_STATE[tab].index ? 'active' : ''}" data-value="${item}">${item}</div>
+            `).join('');
+
+            list.style.display = 'block';
+
+            list.querySelectorAll('.autocomplete-item').forEach(item => {
+                item.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    applyAutocompleteSuggestion(tab, item.dataset.value);
+                });
+            });
+        }
+
+        function tryAutocomplete(tab) {
+            const textarea = document.getElementById(`tx-${tab}`);
+            const value = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            const { word } = getAutocompleteWordAtCursor(value, cursorPos);
+            const suggestions = getAutocompleteSuggestions(word, value);
+
+            if (!suggestions.length) return false;
+            applyAutocompleteSuggestion(tab, suggestions[0]);
+            return true;
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
+
+        function highlightSyntax(text) {
+            if (!text) return "";
+
+            const tokenPattern = /(#[^\n]*)|("(?:[^"\\]|\\.)*")|\b(PROGRAMA|KI|SCOUTER|ROSHI|SENSAR|ESQUIVAR|ENTRENAR|RASTREAR|EN|GRAVEDAD|TECNICA|TRANSMITIR|FUSION|DESEO|INVERTIR|CANON|RELLENO|VACIO|CAPSULA|ACTIVAR|EVOLUCIONA|LEGENDARIO|SI|SINO|MIENTRAS|REPETIR|RETORNAR|IF|ELSE|WHILE|FOREACH|GRAVITY|TECHNIQUE|RETURN|AND|OR|NOT|TRUE|FALSE|NULL|WARRIOR|CREATE|EVOLVES|STATIC|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO|INICIAR_TABLERO|NUBE_KINTON|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE|VERDADERO|FALSO|NORTE|SUR|ESTE|OESTE|GOKU|KAIOSHIN)\b|\b(ESFERA_[1-7])\b|\b(\d+)\b|([A-Za-z_][A-Za-z0-9_]*)|([(){}\[\],.;:=+\-*/%<>!&|?])/g;
+
+            let result = "";
+            let lastIndex = 0;
+
+            text.replace(tokenPattern, (match, ...args) => {
+                const offset = args[args.length - 2];
+                const comment = args[0];
+                const stringToken = args[1];
+                const keyword = args[2];
+                const routine = args[3];
+                const command = args[4];
+                const constant = args[5];
+                const number = args[6];
+                const identifier = args[7];
+                const operator = args[8];
+
+                const plainBefore = text.slice(lastIndex, offset);
+                result += escapeHtml(plainBefore);
+
+                let token = match;
+                if (comment) token = `<span class="hl-comment">${escapeHtml(comment)}</span>`;
+                else if (stringToken) token = `<span class="hl-string">${escapeHtml(stringToken)}</span>`;
+                else if (keyword) token = `<span class="hl-keyword">${escapeHtml(keyword)}</span>`;
+                else if (routine) token = `<span class="hl-routine">${escapeHtml(routine)}</span>`;
+                else if (command) token = `<span class="hl-command">${escapeHtml(command)}</span>`;
+                else if (constant) token = `<span class="hl-constant">${escapeHtml(constant)}</span>`;
+                else if (number) token = `<span class="hl-number">${escapeHtml(number)}</span>`;
+                else if (identifier) token = `<span class="hl-identifier">${escapeHtml(identifier)}</span>`;
+                else if (operator) token = `<span class="hl-operator">${escapeHtml(operator)}</span>`;
+                else token = escapeHtml(match);
+
+                result += token;
+                lastIndex = offset + match.length;
+                return match;
+            });
+
+            if (lastIndex < text.length) {
+                result += escapeHtml(text.slice(lastIndex));
+            }
+
+            if (text.endsWith('\n')) result += ' ';
+            return result;
         }
 
         function updateEditor(tab) {
@@ -228,6 +440,55 @@
             const hl = document.getElementById(`hl-${tab}`);
             hl.scrollTop = tx.scrollTop;
             hl.scrollLeft = tx.scrollLeft;
+        }
+
+        function attachAutocomplete(tab) {
+            const textarea = document.getElementById(`tx-${tab}`);
+
+            textarea.addEventListener('input', () => {
+                const value = textarea.value;
+                const cursorPos = textarea.selectionStart;
+                renderAutocomplete(tab, value, cursorPos);
+                updateEditor(tab);
+            });
+
+            textarea.addEventListener('keydown', (event) => {
+                const state = AUTOCOMPLETE_STATE[tab];
+
+                if (event.key === 'ArrowDown' && state && state.suggestions.length) {
+                    event.preventDefault();
+                    state.index = (state.index + 1) % state.suggestions.length;
+                    const list = document.getElementById(`autocomplete-${tab}`);
+                    list.querySelectorAll('.autocomplete-item').forEach((item, index) => {
+                        item.classList.toggle('active', index === state.index);
+                    });
+                    return;
+                }
+
+                if (event.key === 'ArrowUp' && state && state.suggestions.length) {
+                    event.preventDefault();
+                    state.index = (state.index - 1 + state.suggestions.length) % state.suggestions.length;
+                    const list = document.getElementById(`autocomplete-${tab}`);
+                    list.querySelectorAll('.autocomplete-item').forEach((item, index) => {
+                        item.classList.toggle('active', index === state.index);
+                    });
+                    return;
+                }
+
+                if ((event.key === 'Tab' || event.key === 'Enter') && state && state.suggestions.length) {
+                    event.preventDefault();
+                    applyAutocompleteSuggestion(tab, state.suggestions[state.index]);
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    hideAutocomplete(tab);
+                }
+            });
+
+            textarea.addEventListener('blur', () => {
+                setTimeout(() => hideAutocomplete(tab), 100);
+            });
         }
 
         function switchTab(tabName) {
@@ -251,6 +512,8 @@
             document.getElementById("tx-program").value = defaultProgram;
             document.getElementById("tx-library").value = defaultLibrary;
 
+            attachAutocomplete('program');
+            attachAutocomplete('library');
             updateEditor('program');
             updateEditor('library');
         }
