@@ -44,6 +44,7 @@
         .tab-content.active { display: flex; }
 
         /* Editor Solapado VS Code Style */
+        /* Editor Solapado VS Code Style */
         .editor-wrapper {
             position: relative;
             flex: 1;
@@ -72,10 +73,12 @@
             tab-size: 4;
         }
 
+        /* Fuerza la transparencia del texto tipeado para ver solo los colores de abajo */
         .editor-wrapper textarea {
-            color: transparent;
-            background: transparent;
-            caret-color: #aeafad;
+            color: transparent !important;
+            -webkit-text-fill-color: transparent !important;
+            background: transparent !important;
+            caret-color: #ffffff !important; /* Cursor blanco visible */
             resize: none;
             outline: none;
             z-index: 2;
@@ -88,13 +91,13 @@
             color: #d4d4d4;
         }
 
-        /* Colores Syntax Highlighting (Tema VS Code Dark / Dracula) */
-        .hl-comment { color: #6A9955; font-style: italic; } /* Verde Comentario */
-        .hl-keyword { color: #C586C0; font-weight: bold; } /* Púrpura ROSHI, SAYAYIN, etc */
-        .hl-command { color: #DCDCAA; font-weight: bold; } /* Amarillo Funciones INICIAR_TABLERO, VOLAR */
-        .hl-constant { color: #4FC1FF; } /* Azul Direcciones y Esferas */
-        .hl-number   { color: #B5CEA8; } /* Verde claro Números */
-        .hl-string   { color: #CE9178; } /* Naranja Cadenas */
+        /* Colores de sintaxis VS Code */
+        .hl-comment { color: #6A9955 !important; font-style: italic; } /* Verde para comentarios # */
+        .hl-keyword { color: #C586C0 !important; font-weight: bold; } /* Púrpura */
+        .hl-command { color: #DCDCAA !important; font-weight: bold; } /* Amarillo funciones */
+        .hl-constant { color: #4FC1FF !important; } /* Azul direcciones/esferas */
+        .hl-number   { color: #B5CEA8 !important; } /* Verde claro números */
+        .hl-string   { color: #CE9178 !important; } /* Naranja */
 
         /* Toolbar */
         .file-toolbar {
