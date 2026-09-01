@@ -7,6 +7,12 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <script src="dragonscript_engine.js"></script>
     
+    <!-- Prism CSS (Tema VS Code Dark / Tomorrow Night) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <!-- CodeJar & Prism JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/codejar@3.7.0/codejar.min.js"></script>
+
     <style>
         * { box-sizing: border-box; }
         body { font-family: monospace; background-color: #121212; color: #fff; margin: 0; padding: 15px; }
@@ -36,14 +42,12 @@
             font-family: monospace;
             font-weight: bold;
             border-radius: 6px 6px 0 0;
-            width: auto;
         }
         .tab-btn.active { background: #ff9900; color: #000; border-color: #ff9900; }
 
         .tab-content { display: none; flex: 1; flex-direction: column; position: relative; }
         .tab-content.active { display: flex; }
 
-        /* Toolbar */
         .file-toolbar {
             display: flex;
             gap: 6px;
@@ -60,84 +64,39 @@
             border: 1px solid #444;
             border-radius: 4px;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
         }
-        .file-toolbar button:hover, .file-toolbar label:hover { background: #3a3a3a; color: #fff; }
 
-        /* Contenedor del Editor de Código Solapado */
-        .editor-wrapper {
-            position: relative;
+        /* Editor editable directo con CodeJar */
+        .editor {
             flex: 1;
             min-height: 250px;
             background: #1e1e1e !important;
             border: 1px solid #333;
             border-radius: 0 0 6px 6px;
-            overflow: hidden;
-        }
-
-        /* Alineación idéntica para Textarea y Pre */
-        .editor-wrapper textarea, 
-        .editor-wrapper pre {
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            padding: 12px !important;
-            margin: 0 !important;
-            border: none !important;
+            padding: 12px;
             font-family: 'Consolas', 'Courier New', monospace !important;
             font-size: 14px !important;
             line-height: 1.5 !important;
-            white-space: pre !important;
-            word-wrap: normal !important;
-            overflow: auto !important;
-            tab-size: 4 !important;
-            box-sizing: border-box !important;
+            overflow: auto;
+            outline: none;
+            white-space: pre;
+            tab-size: 4;
         }
 
-        /* Textarea transparente para recibir input sin tapar el resaltado */
-        .editor-wrapper textarea {
-            color: transparent !important;
-            -webkit-text-fill-color: transparent !important;
-            background: transparent !important;
-            caret-color: #ffffff !important;
-            resize: none !important;
-            outline: none !important;
-            z-index: 2 !important;
-        }
+        /* Custom Token Colors (Mapeo VS Code) */
+        .token.comment { color: #6A9955 !important; font-style: italic; }
+        .token.keyword { color: #C586C0 !important; font-weight: bold; }
+        .token.function { color: #DCDCAA !important; font-weight: bold; }
+        .token.variable { color: #4FC1FF !important; }
+        .token.number { color: #B5CEA8 !important; }
+        .token.string { color: #CE9178 !important; }
 
-        /* Bloque pre/code que muestra los colores reales */
-        .editor-wrapper pre {
-            z-index: 1 !important;
-            pointer-events: none !important;
-            background: transparent !important;
-            color: #d4d4d4 !important; /* Gris claro de VS Code para texto base */
-        }
-
-        .editor-wrapper code {
-            font-family: inherit !important;
-            font-size: inherit !important;
-            background: transparent !important;
-        }
-
-        /* --- PALETA DE COLORES EXACTA DE VS CODE / DRACULA --- */
-        .hl-comment  { color: #6A9955 !important; font-style: italic !important; } /* Comentarios # (Verde) */
-        .hl-keyword  { color: #C586C0 !important; font-weight: bold !important; }  /* Estructuras de Control (Magenta/Púrpura) */
-        .hl-routine  { color: #4EC9B0 !important; font-weight: bold !important; }  /* Definición ROSHI / KAIOSHIN / GOKU (Turquesa) */
-        .hl-command  { color: #DCDCAA !important; font-weight: bold !important; }  /* Comandos/Acciones (Amarillo) */
-        .hl-constant { color: #4FC1FF !important; }                                /* Direcciones y Esferas (Azul claro) */
-        .hl-number   { color: #B5CEA8 !important; }                                /* Números (Verde claro) */
-        .hl-string   { color: #CE9178 !important; }                                /* Cadenas (Naranja/Rosa) */
-
-        /* Acciones y Consola */
         button.action-btn { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
         button.action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
         
         #output { width: 100%; height: 130px; background: #000; color: #00ff00; font-size: 12px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
 
-        /* Tablero GUI */
+        /* GUI Tablero */
         #grid { display: grid; gap: 2px; background: #1a1b26; padding: 6px; border-radius: 6px; width: 100%; max-width: 360px; aspect-ratio: 1; border: 1px solid #333; }
         .cell { background: #282a36; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2px; position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 4px; padding: 2px; overflow: hidden; }
         .cell-coord { position: absolute; top: 2px; left: 2px; font-size: 8px; color: #555; pointer-events: none; }
@@ -169,20 +128,13 @@
                 <button onclick="guardarArchivo()">Exportar (.ds) 💾</button>
             </div>
 
-            <!-- Editor Programa -->
+            <!-- Divs editables controlados por CodeJar -->
             <div id="tab-program" class="tab-content active">
-                <div class="editor-wrapper">
-                    <textarea id="tx-program" spellcheck="false" oninput="updateHighlight('program')" onscroll="syncScroll('program')"></textarea>
-                    <pre><code id="hl-program"></code></pre>
-                </div>
+                <div id="editor-program" class="editor"></div>
             </div>
 
-            <!-- Editor Biblioteca -->
             <div id="tab-library" class="tab-content">
-                <div class="editor-wrapper">
-                    <textarea id="tx-library" spellcheck="false" oninput="updateHighlight('library')" onscroll="syncScroll('library')"></textarea>
-                    <pre><code id="hl-library"></code></pre>
-                </div>
+                <div id="editor-library" class="editor"></div>
             </div>
 
             <button id="run-btn" class="action-btn" onclick="runCode()" disabled>Cargando entorno...</button>
@@ -212,61 +164,26 @@
         let velocidadAnimacion = 300;
         let ultimoEstadoTablero = null;
         let activeTab = 'program';
+        let jarProgram, jarLibrary;
 
         const ESTRELLAS_MAP = {
             "ESFERA_1": "1★", "ESFERA_2": "2★", "ESFERA_3": "3★",
             "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
         };
 
-        // Resaltador de Sintaxis completo de DragonScript
-        function highlightCode(src) {
-            let escaped = src
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
+        // Definición de Gramática DragonScript para Prism
+        Prism.languages.dragonscript = {
+            'comment': /#[^\n]*/,
+            'string': /"[^"]*"/,
+            'keyword': /\b(PROGRAMA|ROSHI|KAIOSHIN|GOKU|SAYAYIN|SI_HAY|SI|SINO|MIENTRAS|REPETIR|RETORNAR)\b/,
+            'function': /\b(INICIAR_TABLERO|VOLAR|NUBE_KINTON|CARGAR|DRENAR|MOSTRAR_TABLERO|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE)\b/,
+            'variable': /\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7|VERDADERO|FALSO)\b/,
+            'number': /\b\d+\b/
+        };
 
-            return escaped.replace(
-                /(#[^\n]*)|("[^"]*")|\b(PROGRAMA|SI_HAY|SI|SINO|MIENTRAS|REPETIR|RETORNAR)\b|\b(ROSHI|KAIOSHIN|GOKU)\b|\b(INICIAR_TABLERO|VOLAR|NUBE_KINTON|CARGAR|DRENAR|MOSTRAR_TABLERO|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE)\b|\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7|VERDADERO|FALSO)\b|\b(\d+)\b/g,
-                (match, comment, str, keyword, routine, command, constant, number) => {
-                    if (comment)  return `<span class="hl-comment">${comment}</span>`;   // Verde (#)
-                    if (str)      return `<span class="hl-string">${str}</span>`;       // Naranja
-                    if (keyword)  return `<span class="hl-keyword">${keyword}</span>`;   // Magenta/Púrpura (Estructuras de control)
-                    if (routine)  return `<span class="hl-routine">${routine}</span>`;   // Turquesa (Definiciones ROSHI/KAIOSHIN)
-                    if (command)  return `<span class="hl-command">${command}</span>`;   // Amarillo (Comandos/Acciones/Funciones)
-                    if (constant) return `<span class="hl-constant">${constant}</span>`; // Azul claro (Direcciones, Esferas, Booleans)
-                    if (number)   return `<span class="hl-number">${number}</span>`;     // Verde claro (Números)
-                    return match;
-                }
-            ) + (src.endsWith('\n') ? ' ' : '');
-        }
-
-        function updateHighlight(tab) {
-            const tx = document.getElementById(`tx-${tab}`);
-            const hl = document.getElementById(`hl-${tab}`);
-            hl.innerHTML = highlightCode(tx.value);
-            localStorage.setItem(`ds_${tab}`, tx.value);
-        }
-
-        function syncScroll(tab) {
-            const tx = document.getElementById(`tx-${tab}`);
-            const pre = document.querySelector(`#tab-${tab} pre`);
-            pre.scrollTop = tx.scrollTop;
-            pre.scrollLeft = tx.scrollLeft;
-        }
-
-        function initEditors() {
-            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(4, 4)\n\n# Programa principal\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
-            const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca de Funciones y Procedimientos\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
-
-            const txProg = document.getElementById("tx-program");
-            const txLib = document.getElementById("tx-library");
-
-            txProg.value = defaultProgram;
-            txLib.value = defaultLibrary;
-
-            updateHighlight('program');
-            updateHighlight('library');
-        }
+        const highlight = editor => {
+            editor.innerHTML = Prism.highlight(editor.innerText, Prism.languages.dragonscript, 'dragonscript');
+        };
 
         function switchTab(tabName) {
             activeTab = tabName;
@@ -289,16 +206,15 @@
             const reader = new FileReader();
             reader.onload = function(evt) {
                 const content = evt.target.result;
-                const tx = document.getElementById(`tx-${activeTab}`);
-                tx.value = content;
-                updateHighlight(activeTab);
+                if (activeTab === 'program') jarProgram.updateCode(content);
+                else jarLibrary.updateCode(content);
             };
             reader.readAsText(file);
             e.target.value = '';
         }
 
         function guardarArchivo() {
-            const content = document.getElementById(`tx-${activeTab}`).value;
+            const content = activeTab === 'program' ? jarProgram.toString() : jarLibrary.toString();
             const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
             
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -391,7 +307,19 @@
         }
 
         async function init() {
-            initEditors();
+            // Inicializar editores CodeJar
+            jarProgram = CodeJar(document.getElementById('editor-program'), highlight);
+            jarLibrary = CodeJar(document.getElementById('editor-library'), highlight);
+
+            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(4, 4)\n\n# Programa principal\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
+            const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca de Funciones y Procedimientos\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
+
+            jarProgram.updateCode(defaultProgram);
+            jarLibrary.updateCode(defaultLibrary);
+
+            jarProgram.onUpdate(code => localStorage.setItem("ds_program", code));
+            jarLibrary.onUpdate(code => localStorage.setItem("ds_library", code));
+
             const status = document.getElementById("status");
             const btn = document.getElementById("run-btn");
             const output = document.getElementById("output");
@@ -435,8 +363,8 @@ def execute_dragonscript(user_code, lib_code):
         }
 
         async function runCode() {
-            const code = document.getElementById("tx-program").value;
-            const libCode = document.getElementById("tx-library").value;
+            const code = jarProgram.toString();
+            const libCode = jarLibrary.toString();
             const output = document.getElementById("output");
             const btn = document.getElementById("run-btn");
             output.innerText = "";
