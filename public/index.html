@@ -60,23 +60,46 @@
             cursor: pointer;
         }
 
-        /* Editor Editable con Sintaxis */
-        .editor-box {
+        /* Contenedor del Editor de Doble Capa */
+        .editor-wrapper {
+            position: relative;
             flex: 1;
             min-height: 250px;
             background: #1e1e1e;
-            color: #d4d4d4;
             border: 1px solid #333;
             border-radius: 0 0 6px 6px;
+            overflow: hidden;
+        }
+
+        .editor-textarea, .editor-highlight {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             padding: 12px;
+            margin: 0;
+            border: none;
             font-family: 'Consolas', 'Courier New', monospace;
             font-size: 14px;
             line-height: 1.5;
-            outline: none;
-            overflow-y: auto;
             white-space: pre-wrap;
-            word-break: break-all;
+            word-wrap: break-word;
             tab-size: 4;
+            box-sizing: border-box;
+        }
+
+        .editor-textarea {
+            z-index: 2;
+            color: transparent;
+            background: transparent;
+            caret-color: #00ff00; /* Color del cursor */
+            resize: none;
+            outline: none;
+        }
+
+        .editor-highlight {
+            z-index: 1;
+            color: #d4d4d4;
+            pointer-events: none;
+            overflow: hidden;
         }
 
         /* PALETA COLORES VS CODE */
@@ -126,11 +149,17 @@
             </div>
 
             <div id="tab-program" class="tab-content active">
-                <div id="ed-program" class="editor-box" contenteditable="true" spellcheck="false" oninput="onEditorInput('program')"></div>
+                <div class="editor-wrapper">
+                    <pre class="editor-highlight" id="hl-program"></pre>
+                    <textarea class="editor-textarea" id="tx-program" spellcheck="false" oninput="updateEditor('program')" onscroll="syncScroll('program')"></textarea>
+                </div>
             </div>
 
             <div id="tab-library" class="tab-content">
-                <div id="ed-library" class="editor-box" contenteditable="true" spellcheck="false" oninput="onEditorInput('library')"></div>
+                <div class="editor-wrapper">
+                    <pre class="editor-highlight" id="hl-library"></pre>
+                    <textarea class="editor-textarea" id="tx-library" spellcheck="false" oninput="updateEditor('library')" onscroll="syncScroll('library')"></textarea>
+                </div>
             </div>
 
             <button id="run-btn" class="action-btn" onclick="runCode()" disabled>Cargando Pyodide...</button>
@@ -169,6 +198,9 @@
         function highlightSyntax(text) {
             let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             
+            // Añadimos espacio extra si termina en salto de línea para alineación de scroll
+            if (escaped.endsWith('\n')) escaped += ' ';
+
             return escaped.replace(
                 /(#[^\n]*)|("[^"]*")|\b(PROGRAMA|SI_HAY|SI|SINO|MIENTRAS|REPETIR|RETORNAR)\b|\b(ROSHI|KAIOSHIN|GOKU)\b|\b(INICIAR_TABLERO|VOLAR|NUBE_KINTON|CARGAR|DRENAR|MOSTRAR_TABLERO|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE)\b|\b(NORTE|SUR|ESTE|OESTE|ESFERA_1|ESFERA_2|ESFERA_3|ESFERA_4|ESFERA_5|ESFERA_6|ESFERA_7|VERDADERO|FALSO)\b|\b(\d+)\b/g,
                 (m, comment, str, keyword, routine, command, constant, number) => {
@@ -184,56 +216,18 @@
             );
         }
 
-        function saveCaretPosition(el) {
-            const sel = window.getSelection();
-            if (!sel.rangeCount) return 0;
-            const range = sel.getRangeAt(0);
-            const preRange = range.cloneRange();
-            preRange.selectNodeContents(el);
-            preRange.setEnd(range.endContainer, range.endOffset);
-            return preRange.toString().length;
+        function updateEditor(tab) {
+            const tx = document.getElementById(`tx-${tab}`);
+            const hl = document.getElementById(`hl-${tab}`);
+            hl.innerHTML = highlightSyntax(tx.value);
+            localStorage.setItem(`ds_${tab}`, tx.value);
         }
 
-        function restoreCaretPosition(el, pos) {
-            const sel = window.getSelection();
-            const range = document.createRange();
-            let currentPos = 0;
-
-            function traverseNodes(node) {
-                if (node.nodeType === 3) {
-                    const len = node.length;
-                    if (currentPos + len >= pos) {
-                        range.setStart(node, pos - currentPos);
-                        range.collapse(true);
-                        return true;
-                    }
-                    currentPos += len;
-                } else {
-                    for (let child of node.childNodes) {
-                        if (traverseNodes(child)) return true;
-                    }
-                }
-                return false;
-            }
-
-            traverseNodes(el);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-
-        function applyHighlight(tab) {
-            const el = document.getElementById(`ed-${tab}`);
-            const text = el.innerText;
-            const caretPos = saveCaretPosition(el);
-            
-            el.innerHTML = highlightSyntax(text);
-            restoreCaretPosition(el, caretPos);
-
-            localStorage.setItem(`ds_${tab}`, text);
-        }
-
-        function onEditorInput(tab) {
-            applyHighlight(tab);
+        function syncScroll(tab) {
+            const tx = document.getElementById(`tx-${tab}`);
+            const hl = document.getElementById(`hl-${tab}`);
+            hl.scrollTop = tx.scrollTop;
+            hl.scrollLeft = tx.scrollLeft;
         }
 
         function switchTab(tabName) {
@@ -254,14 +248,11 @@
             const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(4, 4)\n\n# Programa principal\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
             const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca de Funciones\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
 
-            const edProg = document.getElementById("ed-program");
-            const edLib = document.getElementById("ed-library");
+            document.getElementById("tx-program").value = defaultProgram;
+            document.getElementById("tx-library").value = defaultLibrary;
 
-            edProg.innerText = defaultProgram;
-            edLib.innerText = defaultLibrary;
-
-            applyHighlight('program');
-            applyHighlight('library');
+            updateEditor('program');
+            updateEditor('library');
         }
 
         function cargarArchivo(e) {
@@ -270,17 +261,17 @@
 
             const reader = new FileReader();
             reader.onload = function(evt) {
-                const ed = document.getElementById(`ed-${activeTab}`);
-                ed.innerText = evt.target.result;
-                applyHighlight(activeTab);
+                const tx = document.getElementById(`tx-${activeTab}`);
+                tx.value = evt.target.result;
+                updateEditor(activeTab);
             };
             reader.readAsText(file);
             e.target.value = '';
         }
 
         function guardarArchivo() {
-            const ed = document.getElementById(`ed-${activeTab}`);
-            const content = ed.innerText;
+            const tx = document.getElementById(`tx-${activeTab}`);
+            const content = tx.value;
             const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
             
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -423,8 +414,8 @@ def execute_dragonscript(user_code, lib_code):
         }
 
         async function runCode() {
-            const code = document.getElementById("ed-program").innerText;
-            const libCode = document.getElementById("ed-library").innerText;
+            const code = document.getElementById("tx-program").value;
+            const libCode = document.getElementById("tx-library").value;
             const output = document.getElementById("output");
             const btn = document.getElementById("run-btn");
             output.innerText = "";
