@@ -5,28 +5,41 @@
 
 INICIAR_TABLERO(4, 4)
 
-ROSHI SacarTodasLasDeEstrellas_(esferaASacar) {
-# Saca todas las esfera **esferaASacar** de la celda actual.
-# Pre: Debe haber la cantidad de **esferaASacar** según se indique
-#Param: **esferaASacar** - Tipo: Esfera - Indica la esfera a sacar en la celda actual
-    SENSAR hayEsferaAca(esferaASacar){
-        DRENAR(esferaASacar)
-    }   
+ ROSHI SacarTodasLasDeEstrellas_(esferaASacar) {
+# # Saca todas las esfera **esferaASacar** de la celda actual.
+# # Pre: Debe haber la cantidad de **esferaASacar** según se indique
+# #Param: **esferaASacar** - Tipo: Esfera - Indica la esfera a sacar en la celda actual
+     SENSAR hayEsferaAca(esferaASacar){
+         DRENAR(esferaASacar)
+     }   
     
-}
+ }
 
-#
-TECNICA hayEsferaAca(esferaASacar) {
+
+ TECNICA hayEsferaAca(esferaASacar) {
 # Indica si en la úbicación actual hay una esfera **esferaASacar**.
 # Pre: Ninguna
 # Param: **esferaASacar** - Tipo: Esfera - Indica la esfera a buscar en la celda actual.
 # Tipo: Booleano
     
-        TRANSMITIR (HAY (ESFERA_1 DESEO ESFERA_2 DESEO ESFERA_3 DESEO ESFERA_4))
+         TRANSMITIR (HAY (ESFERA_1 DESEO ESFERA_2 DESEO ESFERA_3 DESEO ESFERA_4))
+ }
+
+# SCOUTER hayEsferaAca(ESFERA_1)
+
+
+#SacarTodasLasDeEstrellas_(ESFERA_1)
+
+
+# 2. Escribir un procedimiento VaciarCelda() que quite de la celda actual todas las bolitas de todos
+#los colores, dejando la celda vacía.
+
+ROSHI VaciarCelda() {
+# Saca todas las esferas de la celda actual.
+# Pre: Debe haber al menos una esfera en la celda actual.  
+    SacarTodasLasDeEstrellas_(ESFERA_2)
 }
 
-
-CARGAR(ESFERA_1)
-
-SacarTodasLasDeEstrellas_(ESFERA_1)
+CARGAR(ESFERA_2)
+VaciarCelda()
 MOSTRAR_TABLERO()
