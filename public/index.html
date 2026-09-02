@@ -18,10 +18,22 @@
         #status { font-size: 12px; color: #ffaa00; font-weight: bold; }
 
         /* Workspace sin sidebar lateral */
-        .workspace { display: flex; flex: 1; height: calc(100vh - 40px); width: 100vw; overflow: hidden; }
+        .workspace {
+    display: flex;
+    flex-direction: column; /* Apila de arriba a abajo en vez de columnas laterales */
+    height: calc(100vh - 40px);
+    width: 100vw;
+    overflow: auto;
+}
 
         /* Editor Central */
-        .editor-container { flex: 1; display: flex; flex-direction: column; background: #1e1e1e; border-right: 1px solid #2b2b2b; overflow: hidden; }
+        .editor-container {
+    flex: 1;
+    min-height: 50vh;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #2b2b2b;
+}
         
         .tabs-header { display: flex; background: #181818; border-bottom: 1px solid #2b2b2b; }
         .tab-btn { background: #181818; color: #888; border: none; padding: 10px 20px; font-size: 13px; cursor: pointer; border-right: 1px solid #2b2b2b; display: flex; align-items: center; gap: 6px; }
@@ -69,7 +81,11 @@
         .hl-operator { color: #D4D4D4; }
 
         /* Panel Derecho (Tablero) */
-        .preview-container { width: 540px; min-width: 460px; display: flex; flex-direction: column; background: #141414; }
+        .preview-container {
+    width: 100%; /* Ancho completo, sin barra/sidebar fija al costado */
+    min-width: 100%;
+    background: #141414;
+}
 
         /* Fondo del mapa estilo pasto DBZ */
         .board-wrapper {
