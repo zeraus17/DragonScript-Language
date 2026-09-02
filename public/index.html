@@ -11,30 +11,20 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
         body { background-color: #181818; color: #cccccc; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* Barra Superior / Header */
+        /* Header */
         header { background: #1f1f1f; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; border-bottom: 1px solid #2b2b2b; }
         .logo { display: flex; align-items: center; gap: 8px; font-weight: bold; color: #ffffff; font-size: 14px; }
         .logo span { color: #ff9900; }
         #status { font-size: 12px; color: #ffaa00; font-weight: bold; }
 
-        /* Contenedor Principal (Workspace completo) */
+        /* Workspace sin sidebar lateral */
         .workspace { display: flex; flex: 1; height: calc(100vh - 40px); width: 100vw; overflow: hidden; }
 
-        /* Sidebar Archivos (Explorador izquierdo tipo VS Code) */
-        .sidebar { width: 220px; min-width: 200px; background: #141414; border-right: 1px solid #2b2b2b; padding: 10px; font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
-        .sidebar-title { text-transform: uppercase; font-size: 10px; font-weight: bold; color: #666; margin-bottom: 5px; }
-        .file-item { padding: 6px 10px; border-radius: 4px; cursor: pointer; color: #aaa; display: flex; align-items: center; gap: 8px; }
-        .file-item.active, .file-item:hover { background: #222222; color: #ffffff; }
-
-        .file-actions { margin-top: auto; display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px solid #2b2b2b; }
-        .file-actions label, .file-actions button { background: #222; color: #ccc; border: 1px solid #333; padding: 6px; border-radius: 4px; font-size: 11px; text-align: center; cursor: pointer; }
-        .file-actions label:hover, .file-actions button:hover { background: #333; color: #fff; }
-
-        /* Panel Central (Editor de código) */
+        /* Editor Central */
         .editor-container { flex: 1; display: flex; flex-direction: column; background: #1e1e1e; border-right: 1px solid #2b2b2b; overflow: hidden; }
         
         .tabs-header { display: flex; background: #181818; border-bottom: 1px solid #2b2b2b; }
-        .tab-btn { background: #181818; color: #888; border: none; padding: 10px 18px; font-size: 13px; cursor: pointer; border-right: 1px solid #2b2b2b; display: flex; align-items: center; gap: 6px; }
+        .tab-btn { background: #181818; color: #888; border: none; padding: 10px 20px; font-size: 13px; cursor: pointer; border-right: 1px solid #2b2b2b; display: flex; align-items: center; gap: 6px; }
         .tab-btn.active { background: #1e1e1e; color: #fff; border-top: 2px solid #ff9900; }
 
         .editor-tab-content { display: none; flex: 1; position: relative; height: calc(100% - 37px); }
@@ -78,10 +68,10 @@
         .hl-identifier { color: #9CDCFE; }
         .hl-operator { color: #D4D4D4; }
 
-        /* Panel Derecho (Tablero GUI + Consola) */
-        .preview-container { width: 520px; min-width: 450px; display: flex; flex-direction: column; background: #141414; }
+        /* Panel Derecho (Tablero) */
+        .preview-container { width: 540px; min-width: 460px; display: flex; flex-direction: column; background: #141414; }
 
-        /* Mapa de pasto retro estilo Dragon Ball */
+        /* Fondo del mapa estilo pasto DBZ */
         .board-wrapper {
             flex: 1;
             background: #7cb342 radial-gradient(circle, #8bc34a 20%, #7cb342 80%);
@@ -91,7 +81,7 @@
         #grid {
             display: grid; gap: 2px; padding: 4px; border-radius: 6px;
             background-color: rgba(0,0,0,0.25); border: 3px solid #558b2f;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 460px; aspect-ratio: 1;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 100%; max-width: 480px; aspect-ratio: 1;
         }
 
         .cell {
@@ -101,11 +91,10 @@
 
         .cell-coord { position: absolute; top: 2px; left: 2px; font-size: 8px; color: rgba(0,0,0,0.5); font-weight: bold; pointer-events: none; }
 
-        /* Sprite del Guerrero (Goku) y Esferas */
-        .guerrero-cell { background-color: rgba(80, 250, 123, 0.3) !important; border-color: #50fa7b !important; }
+        /* Sprite de Goku idéntico al video */
         .guerrero-sprite {
-            width: 85%; height: 85%;
-            background: url('https://i.imgur.com/7yU10P3.png') center/contain no-repeat;
+            width: 90%; height: 90%;
+            background: url('https://i.ibb.co/3ykXmYV/goku-back.png') center/contain no-repeat;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
         }
 
@@ -145,24 +134,14 @@
     </header>
 
     <div class="workspace">
-        <div class="sidebar">
-            <div class="sidebar-title">Explorador</div>
-            <div id="file-btn-program" class="file-item active" onclick="switchTab('program')">📄 programa.ds</div>
-            <div id="file-btn-library" class="file-item" onclick="switchTab('library')">📚 biblioteca.ds</div>
-
-            <div class="file-actions">
-                <label for="file-input">📥 Cargar Archivo (.ds)</label>
-                <input type="file" id="file-input" accept=".ds,.txt" style="display:none;" onchange="cargarArchivo(event)">
-                <button onclick="guardarArchivo()">💾 Exportar (.ds)</button>
-            </div>
-        </div>
-
+        <!-- Editor Central (Sin sidebar a la izquierda) -->
         <div class="editor-container">
             <div class="tabs-header">
                 <button id="tab-btn-program" class="tab-btn active" onclick="switchTab('program')">📄 Programa</button>
                 <button id="tab-btn-library" class="tab-btn" onclick="switchTab('library')">📚 Biblioteca</button>
             </div>
 
+            <!-- Tab Programa -->
             <div id="tab-program" class="editor-tab-content active">
                 <div class="editor-wrapper">
                     <pre class="editor-highlight" id="hl-program"></pre>
@@ -171,6 +150,7 @@
                 </div>
             </div>
 
+            <!-- Tab Biblioteca -->
             <div id="tab-library" class="editor-tab-content">
                 <div class="editor-wrapper">
                     <pre class="editor-highlight" id="hl-library"></pre>
@@ -180,6 +160,7 @@
             </div>
         </div>
 
+        <!-- Preview Tablero GUI + Consola -->
         <div class="preview-container">
             <div class="board-wrapper">
                 <div id="grid"></div>
@@ -415,11 +396,9 @@
         function switchTab(tabName) {
             activeTab = tabName;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.file-item').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.editor-tab-content').forEach(c => c.classList.remove('active'));
 
             document.getElementById(`tab-btn-${tabName}`).classList.add('active');
-            document.getElementById(`file-btn-${tabName}`).classList.add('active');
             document.getElementById(`tab-${tabName}`).classList.add('active');
             updateEditor(tabName);
         }
@@ -436,33 +415,7 @@
             updateEditor('program');
             updateEditor('library');
 
-            renderizarFrameTablero(5, 5, 0, 0, '{"(1,0)":{"ESFERA_1":1}, "(1,1)":{"ESFERA_7":1}}');
-        }
-
-        function cargarArchivo(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const tx = document.getElementById(`tx-${activeTab}`);
-                tx.value = evt.target.result;
-                updateEditor(activeTab);
-            };
-            reader.readAsText(file);
-            e.target.value = '';
-        }
-
-        function guardarArchivo() {
-            const tx = document.getElementById(`tx-${activeTab}`);
-            const content = tx.value;
-            const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
-            
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = fileName;
-            a.click();
+            renderizarFrameTablero(5, 5, 1, 1, '{"(2,1)":{"ESFERA_1":1}, "(1,2)":{"ESFERA_7":1}}');
         }
 
         window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
@@ -525,7 +478,6 @@
                     cell.appendChild(coord);
 
                     if (c === posX && r === posY) {
-                        cell.classList.add("guerrero-cell");
                         const goku = document.createElement("div");
                         goku.className = "guerrero-sprite";
                         cell.appendChild(goku);
