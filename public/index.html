@@ -97,18 +97,19 @@
 
         #grid {
     display: grid;
-    gap: 2px;
+    /* QUITAMOS las referencias de fr, gap dinámico y tamaño variable */
+    /* gap: 2px; */
     padding: 4px;
     border-radius: 6px;
     background-color: rgba(0, 0, 0, 0.25);
     border: 3px solid #558b2f;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    width: 100%;
-    max-width: 480px;
-    aspect-ratio: 1;
+    
+    /* El tamaño se lo dará JavaScript de forma absoluta */
 }
 
-        .cell {
+.cell {
+    /* Mantenemos el estilo visual */
     background-color: rgba(255, 255, 255, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 2px;
@@ -116,8 +117,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden; /* Evita que el video se salga de la casilla */
+    overflow: hidden;
+    
+    /* Mantenemos object-fit: contain para los hijos si hace falta */
 }
+
+/* NUEVA CLASE: Tamaño absoluto para estabilidad */
+.cell-fija {
+    /* Estos valores se SOBREESCRIBIRÁN con JS */
+    width: 60px;
+    height: 60px;
+}
+
         .cell-coord {
     position: absolute;
     top: 2px;
@@ -153,6 +164,24 @@
     font-size: 11px;
     border: 1px solid #ffe082;
     user-select: none;
+}
+
+/* Contenedor del canvas para Chroma Key */
+.guerrero-wrapper {
+    width: 90%;
+    height: 90%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* El canvas resultante, escalado y con sombra */
+.guerrero-canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.4));
+    pointer-events: none;
 }
 
         /* Controles y Consola */
@@ -517,107 +546,109 @@
         }
 
         function renderizarFrameTablero(ancho, alto, posX, posY, celdasJson) {
-            const grid = document.getElementById("grid");
-            if (!grid) return;
+    const grid = document.getElementById("grid");
+    if (!grid) return;
 
-            grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
-            grid.innerHTML = "";
+    grid.innerHTML = "";
 
-            let celdas = {};
-            try { celdas = JSON.parse(celdasJson); } catch (e) {}
+    // 1. CALCULO DE TAMAÑO ABSOLUTO Y FIJO
+    const TABLERO_ANCHO_TOTAL_ABS = 480; // Ancho maximo deseado en px
+    const gapPixels = 2;
+    const paddingTotal = 8; // 4px de padding a cada lado
+    const gapsTotalWidth = (ancho - 1) * gapPixels;
+    
+    // Ancho/Alto fijo para cada celda
+    const cellSizeAbs = (TABLERO_ANCHO_TOTAL_ABS - paddingTotal - gapsTotalWidth) / ancho;
 
-            for (let r = alto - 1; r >= 0; r--) {
-                for (let c = 0; c < ancho; c++) {
-                    const cell = document.createElement("div");
-                    cell.className = "cell";
+    // 2. APLICAR TAMAÑOS EN PIXELES (En lugar de 1fr para evitar resize)
+    grid.style.gridTemplateColumns = `repeat(${ancho}, ${cellSizeAbs}px)`;
+    grid.style.gridTemplateRows = `repeat(${alto}, ${cellSizeAbs}px)`;
+    grid.style.gap = `${gapPixels}px`;
 
-                    const coord = document.createElement("span");
-                    coord.className = "cell-coord";
-                    coord.innerText = `(${c},${r})`;
-                    cell.appendChild(coord);
+    let celdas = {};
+    try { celdas = JSON.parse(celdasJson); } catch (e) {}
 
-                    // Render del video MP4 animado en la celda del guerrero
-                    // Render del Guerrero mediante Canvas para Chroma Key
-                    if (c === posX && r === posY) {
-                        const wrapper = document.createElement("div");
-                        wrapper.className = "guerrero-wrapper";
+    for (let r = alto - 1; r >= 0; r--) {
+        for (let c = 0; c < ancho; c++) {
+            const cell = document.createElement("div");
+            cell.className = "cell cell-fija";
+            
+            // Fijar tamaño estricto de la casilla
+            cell.style.width = `${cellSizeAbs}px`;
+            cell.style.height = `${cellSizeAbs}px`;
 
-                        const video = document.createElement("video");
-                        video.src = "goku.mp4"; // Asegurate que el nombre es exacto
-                        video.muted = true;
-                        video.loop = true;
-                        video.autoplay = true;
-                        video.playsInline = true;
+            const coord = document.createElement("span");
+            coord.className = "cell-coord";
+            coord.innerText = `(${c},${r})`;
+            cell.appendChild(coord);
 
-                        const canvas = document.createElement("canvas");
-                        canvas.className = "guerrero-canvas";
-                        const ctx = canvas.getContext("2d");
+            // 3. CHROMA KEY EN CANVAS (Quita el fondo blanco del MP4)
+            if (c === posX && r === posY) {
+                const wrapper = document.createElement("div");
+                wrapper.className = "guerrero-wrapper";
 
-                        video.addEventListener("loadedmetadata", () => {
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                        });
+                const video = document.createElement("video");
+                video.src = "goku.mp4"; // Cambia a tu nombre exacto si es DragonScript.mp4
+                video.muted = true;
+                video.loop = true;
+                video.autoplay = true;
+                video.playsInline = true;
 
-                        function procesarChromaKey() {
-                            if (video.paused || video.ended) return;
-                            
-                            // Dibujar el frame actual del video en el canvas
-                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            
-                            // Obtener los datos de imagen (píxeles) del canvas
-                            let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                            let data = frame.data;
+                const canvas = document.createElement("canvas");
+                canvas.className = "guerrero-canvas";
+                const ctx = canvas.getContext("2d");
 
-                            // Recorrer cada píxel (cada píxel tiene 4 valores: R, G, B, A)
-                            for (let i = 0; i < data.length; i += 4) {
-                                let r = data[i];     // Rojo
-                                let g = data[i + 1]; // Verde
-                                let b = data[i + 2]; // Azul
-                                // data[i+3] es Alpha (Transparencia)
+                video.addEventListener("loadedmetadata", () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                });
 
-                                // Umbral para detectar el blanco (ajustar si es necesario)
-                                // Si R, G y B son muy altos, el píxel es casi blanco
-                                let threshold = 230; 
-                                if (r > threshold && g > threshold && b > threshold) {
-                                    // Poner el Alpha a 0 (totalmente transparente)
-                                    data[i + 3] = 0;
-                                }
-                            }
-                            
-                            // Volver a poner los datos modificados en el canvas
-                            ctx.putImageData(frame, 0, 0);
-                            
-                            // Solicitar el siguiente frame de animación
-                            requestAnimationFrame(procesarChromaKey);
-                        }
+                function procesarChromaKey() {
+                    if (video.paused || video.ended) return;
+                    
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    let data = frame.data;
 
-                        // Empezar a procesar cuando el video se reproduzca
-                        video.addEventListener("play", procesarChromaKey);
-
-                        // Ocultar el video original y mostrar el canvas
-                        video.style.display = "none";
-                        wrapper.appendChild(video);
-                        wrapper.appendChild(canvas);
-                        cell.appendChild(wrapper);
-                    }
-
-                    const key = `(${c}, ${r})`;
-                    const esferasEnCelda = celdas[key] || {};
-
-                    for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
-                        if (cantidad > 0) {
-                            const orb = document.createElement("div");
-                            orb.className = "esfera-orb";
-                            const estrellas = ESTRELLAS_MAP[esfera] || esfera;
-                            orb.innerText = cantidad > 1 ? `${cantidad}x${estrellas}` : estrellas;
-                            cell.appendChild(orb);
+                    // Recorrer los píxeles y hacer transparente el blanco
+                    let threshold = 220; 
+                    for (let i = 0; i < data.length; i += 4) {
+                        if (data[i] > threshold && data[i + 1] > threshold && data[i + 2] > threshold) {
+                            data[i + 3] = 0; // Alpha 0
                         }
                     }
+                    
+                    ctx.putImageData(frame, 0, 0);
+                    requestAnimationFrame(procesarChromaKey);
+                }
 
-                    grid.appendChild(cell);
+                video.addEventListener("play", procesarChromaKey);
+
+                video.style.display = "none";
+                wrapper.appendChild(video);
+                wrapper.appendChild(canvas);
+                cell.appendChild(wrapper);
+            }
+
+            // 4. RENDER DE ESFERAS DEL DRAGÓN
+            const key = `(${c}, ${r})`;
+            const esferasEnCelda = celdas[key] || {};
+
+            for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
+                if (cantidad > 0) {
+                    const orb = document.createElement("div");
+                    orb.className = "esfera-orb";
+                    const estrellas = ESTRELLAS_MAP[esfera] || esfera;
+                    orb.innerText = cantidad > 1 ? `${cantidad}x${estrellas}` : estrellas;
+                    cell.appendChild(orb);
                 }
             }
+
+            grid.appendChild(cell);
         }
+    }
+}
 
         async function init() {
             initEditors();
