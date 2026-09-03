@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DragonScript Web Playground 🐉</title>
+    <link rel="icon" type="image/png" href="dragonscript-icon.png">
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
     <script src="dragonscript_engine.js"></script>
     
@@ -252,7 +253,7 @@
 
         const ESTRELLAS_MAP = {
             "ESFERA_1": "1★", "ESFERA_2": "2★", "ESFERA_3": "3★",
-            "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
+            "ESFERA_4": "4★"
         };
 
         const DRAGON_KEYWORDS = [
@@ -362,7 +363,7 @@
         function highlightSyntax(text) {
             if (!text) return "";
 
-            const tokenPattern = /(#[^\n]*)|("(?:[^"\\]|\\.)*")|\b(PROGRAMA|KI|SCOUTER|ROSHI|SENSAR|ESQUIVAR|ENTRENAR|RASTREAR|EN|GRAVEDAD|TECNICA|TRANSMITIR|FUSION|DESEO|INVERTIR|CANON|RELLENO|VACIO|CAPSULA|ACTIVAR|EVOLUCIONA|LEGENDARIO|SI|SINO|MIENTRAS|REPETIR|RETORNAR|IF|ELSE|WHILE|FOREACH|GRAVITY|TECHNIQUE|RETURN|AND|OR|NOT|TRUE|FALSE|NULL|WARRIOR|CREATE|EVOLVES|STATIC|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO|INICIAR_TABLERO|NUBE_KINTON|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE|VERDADERO|FALSO|NORTE|SUR|ESTE|OESTE|GOKU|KAIOSHIN)\b|\b(ESFERA_[1-7])\b|\b(\d+)\b|([A-Za-z_][A-Za-z0-9_]*)|([(){}\[\],.;:=+\-*/%<>!&|?])/g;
+            const tokenPattern = /(#[^\n]*)|("(?:[^"\\]|\\.)*")|\b(PROGRAMA|KI|SCOUTER|ROSHI|SENSAR|ESQUIVAR|ENTRENAR|RASTREAR|EN|GRAVEDAD|TECNICA|TRANSMITIR|FUSION|DESEO|INVERTIR|CANON|RELLENO|VACIO|CAPSULA|ACTIVAR|EVOLUCIONA|LEGENDARIO|SI|SINO|MIENTRAS|REPETIR|RETORNAR|IF|ELSE|WHILE|FOREACH|GRAVITY|TECHNIQUE|RETURN|AND|OR|NOT|TRUE|FALSE|NULL|WARRIOR|CREATE|EVOLVES|STATIC|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO|INICIAR_TABLERO|NUBE_KINTON|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE|VERDADERO|FALSO|NORTE|SUR|ESTE|OESTE|GOKU|KAIOSHIN)\b|\b(ESFERA_[1-4])\b|\b(\d+)\b|([A-Za-z_][A-Za-z0-9_]*)|([(){}\[\],.;:=+\-*/%<>!&|?])/g;
 
             let result = "";
             let lastIndex = 0;
@@ -462,7 +463,7 @@
         }
 
         function initEditors() {
-            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(5, 5)\n\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
+            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(5, 5)\n\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_2)\n\nMOSTRAR_TABLERO()`;
             const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca Gobstones-style\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
 
             document.getElementById("tx-program").value = defaultProgram;
@@ -473,7 +474,7 @@
             updateEditor('program');
             updateEditor('library');
 
-            renderizarFrameTablero(5, 5, 1, 1, '{"(2,1)":{"ESFERA_1":1}, "(1,2)":{"ESFERA_7":1}}');
+            renderizarFrameTablero(5, 5, 1, 1, '{"(2,1)":{"ESFERA_1":1}, "(1,2)":{"ESFERA_2":1}}');
         }
 
         window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
@@ -536,16 +537,68 @@
                     cell.appendChild(coord);
 
                     // Render del video MP4 animado en la celda del guerrero
+                    // Render del Guerrero mediante Canvas para Chroma Key
                     if (c === posX && r === posY) {
-                        const videoGuerrero = document.createElement("video");
-                        videoGuerrero.src = "goku.mp4";
-                        videoGuerrero.className = "guerrero-video";
-                        videoGuerrero.autoplay = true;
-                        videoGuerrero.loop = true;
-                        videoGuerrero.muted = true;
-                        videoGuerrero.playsInline = true;
-                        
-                        cell.appendChild(videoGuerrero);
+                        const wrapper = document.createElement("div");
+                        wrapper.className = "guerrero-wrapper";
+
+                        const video = document.createElement("video");
+                        video.src = "goku.mp4"; // Asegurate que el nombre es exacto
+                        video.muted = true;
+                        video.loop = true;
+                        video.autoplay = true;
+                        video.playsInline = true;
+
+                        const canvas = document.createElement("canvas");
+                        canvas.className = "guerrero-canvas";
+                        const ctx = canvas.getContext("2d");
+
+                        video.addEventListener("loadedmetadata", () => {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                        });
+
+                        function procesarChromaKey() {
+                            if (video.paused || video.ended) return;
+                            
+                            // Dibujar el frame actual del video en el canvas
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            // Obtener los datos de imagen (píxeles) del canvas
+                            let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            let data = frame.data;
+
+                            // Recorrer cada píxel (cada píxel tiene 4 valores: R, G, B, A)
+                            for (let i = 0; i < data.length; i += 4) {
+                                let r = data[i];     // Rojo
+                                let g = data[i + 1]; // Verde
+                                let b = data[i + 2]; // Azul
+                                // data[i+3] es Alpha (Transparencia)
+
+                                // Umbral para detectar el blanco (ajustar si es necesario)
+                                // Si R, G y B son muy altos, el píxel es casi blanco
+                                let threshold = 230; 
+                                if (r > threshold && g > threshold && b > threshold) {
+                                    // Poner el Alpha a 0 (totalmente transparente)
+                                    data[i + 3] = 0;
+                                }
+                            }
+                            
+                            // Volver a poner los datos modificados en el canvas
+                            ctx.putImageData(frame, 0, 0);
+                            
+                            // Solicitar el siguiente frame de animación
+                            requestAnimationFrame(procesarChromaKey);
+                        }
+
+                        // Empezar a procesar cuando el video se reproduzca
+                        video.addEventListener("play", procesarChromaKey);
+
+                        // Ocultar el video original y mostrar el canvas
+                        video.style.display = "none";
+                        wrapper.appendChild(video);
+                        wrapper.appendChild(canvas);
+                        cell.appendChild(wrapper);
                     }
 
                     const key = `(${c}, ${r})`;
