@@ -1342,20 +1342,23 @@
 
                
 
-                pyodide.FS.mkdir('/target');
-
-                pyodide.FS.mkdir('/target/dragonscript');
-
-               
+                // Crear directorios base (ignorar si ya existen)
+                try { pyodide.FS.mkdir('/target'); } catch (e) {}
+                try { pyodide.FS.mkdir('/target/dragonscript'); } catch (e) {}
 
                 if (window.DRAGONSCRIPT_FILES) {
-
                     for (const [filename, content] of Object.entries(window.DRAGONSCRIPT_FILES)) {
-
+                        // Crear subdirectorios si el path es anidado (ej: dragonball/characters.py)
+                        const parts = filename.split('/');
+                        if (parts.length > 1) {
+                            let dir = '/target/dragonscript';
+                            for (let i = 0; i < parts.length - 1; i++) {
+                                dir += '/' + parts[i];
+                                try { pyodide.FS.mkdir(dir); } catch (e) {}
+                            }
+                        }
                         pyodide.FS.writeFile(`/target/dragonscript/${filename}`, content);
-
                     }
-
                 }
 
 
