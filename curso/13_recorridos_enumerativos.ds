@@ -1,0 +1,38 @@
+# =====================================================================
+# LECCION 13 - RECORRIDOS SOBRE ENUMERATIVOS (RANGOS)
+# =====================================================================
+# Cuando queremos recorrer una secuencia de numeros consecutivos, no
+# hace falta escribirlos todos. Usamos un RANGO con la notacion
+# [inicio..fin], que genera la lista de enteros de inicio hasta fin
+# (ambos incluidos).
+#
+#     [1..5]   ->  [1, 2, 3, 4, 5]
+#
+# Tambien existe la funcion equivalente RANGO(inicio, fin).
+# =====================================================================
+
+SCOUTER "El rango [1..7] es: "
+SCOUTER [1..7]
+
+# Recorrer un rango con RASTREAR.
+SCOUTER "Cuenta de entrenamiento:"
+RASTREAR n EN [1..5] {
+    SCOUTER "  Serie numero " + n
+}
+
+# Sumar los primeros 10 numeros usando un rango.
+KI suma = 0
+RASTREAR n EN [1..10] {
+    suma += n
+}
+SCOUTER "1 + 2 + ... + 10 = " + suma
+
+# Tabla de multiplicar del 7 (los saiyajin cuentan de a niveles).
+SCOUTER "Tabla del 7:"
+RASTREAR i EN [1..10] {
+    SCOUTER "  7 x " + i + " = " + (7 * i)
+}
+
+# La funcion RANGO hace lo mismo que [a..b].
+SCOUTER "RANGO(3, 6) = "
+SCOUTER RANGO(3, 6)

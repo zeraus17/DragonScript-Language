@@ -1,0 +1,304 @@
+# ==========================================================================
+#  inventario.ds  —  Sistema de Inventario para Negocio
+# --------------------------------------------------------------------------
+#  Sistema completo de gestión de inventario con POO que incluye:
+#    * Productos con stock y precios privados
+#    * Inventario con búsqueda, listado y alertas de stock bajo
+#    * Sistema de ventas que registra transacciones y reduce stock
+# ==========================================================================
+
+SCOUTER "===== Sistema de Inventario de Negocio ====="
+SCOUTER ""
+
+# --------------------------------------------------------------------------
+# Clase Producto - Representa un artículo del inventario
+# --------------------------------------------------------------------------
+WARRIOR Producto {
+    TECHNIQUE __init__(nombre, precio, stock, codigo) {
+        SELF.nombre = nombre
+        SELF.codigo = codigo
+        SELF._precio = precio      # privado: solo se lee con getPrecio()
+        SELF._stock = stock        # privado: solo se modifica con métodos
+    }
+    
+    # Getters para atributos privados
+    TECHNIQUE getPrecio() {
+        RETURN SELF._precio
+    }
+    
+    TECHNIQUE getStock() {
+        RETURN SELF._stock
+    }
+    
+    # Modificadores de stock
+    TECHNIQUE reducirStock(cantidad) {
+        IF SELF._stock >= cantidad {
+            SELF._stock = SELF._stock - cantidad
+            RETURN TRUE
+        }
+        RETURN FALSE    # stock insuficiente
+    }
+    
+    TECHNIQUE agregarStock(cantidad) {
+        SELF._stock = SELF._stock + cantidad
+    }
+    
+    # Verificar si hay stock bajo (menos de 5 unidades)
+    TECHNIQUE stockBajo() {
+        RETURN SELF._stock < 5
+    }
+    
+    # Comparación de precios (sobrecarga de operadores)
+    TECHNIQUE __gt__(otro) {
+        RETURN SELF._precio > otro.getPrecio()
+    }
+    
+    TECHNIQUE __lt__(otro) {
+        RETURN SELF._precio < otro.getPrecio()
+    }
+    
+    # Representación en texto
+    TECHNIQUE __str__() {
+        RETURN "[" + SELF.codigo + "] " + SELF.nombre + " - $" + SELF._precio + " (Stock: " + SELF._stock + ")"
+    }
+}
+
+# --------------------------------------------------------------------------
+# Clase Inventario - Gestiona la colección de productos
+# --------------------------------------------------------------------------
+WARRIOR Inventario {
+    total_productos = 0    # contador de clase (compartido)
+    
+    TECHNIQUE __init__() {
+        # Usamos un array de tamaño fijo (capacidad máxima: 100 productos)
+        # y un contador para saber cuántos hay realmente
+        SELF.productos = [NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                          NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL]
+        SELF.cantidad = 0    # contador de productos actuales
+    }
+    
+    # Agregar un producto al inventario
+    TECHNIQUE agregar(producto) {
+        IF SELF.cantidad >= 100 {
+            SCOUTER "✗ ERROR: Inventario lleno (máximo 100 productos)."
+            RETURN NULL
+        }
+        SELF.productos[SELF.cantidad] = producto
+        SELF.cantidad = SELF.cantidad + 1
+        Inventario.total_productos = Inventario.total_productos + 1
+        SCOUTER "✓ Producto agregado: " + producto.nombre
+    }
+    
+    # Buscar producto por nombre (retorna el producto o NULL)
+    TECHNIQUE buscarPorNombre(nombre) {
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            IF SELF.productos[i].nombre == nombre {
+                RETURN SELF.productos[i]
+            }
+            i = i + 1
+        }
+        RETURN NULL
+    }
+    
+    # Buscar producto por código
+    TECHNIQUE buscarPorCodigo(codigo) {
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            IF SELF.productos[i].codigo == codigo {
+                RETURN SELF.productos[i]
+            }
+            i = i + 1
+        }
+        RETURN NULL
+    }
+    
+    # Listar todos los productos
+    TECHNIQUE listar() {
+        IF SELF.cantidad == 0 {
+            SCOUTER "  El inventario está vacío."
+            RETURN NULL
+        }
+        
+        SCOUTER "--- INVENTARIO COMPLETO ---"
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            SCOUTER "  " + SELF.productos[i]
+            i = i + 1
+        }
+        SCOUTER "Total de productos: " + SELF.cantidad
+    }
+    
+    # Calcular el valor total del inventario
+    TECHNIQUE valorTotal() {
+        KI total = 0
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            KI producto = SELF.productos[i]
+            total = total + (producto.getPrecio() * producto.getStock())
+            i = i + 1
+        }
+        RETURN total
+    }
+    
+    # Mostrar productos con stock bajo
+    TECHNIQUE alertasStockBajo() {
+        SCOUTER "--- ALERTAS DE STOCK BAJO ---"
+        KI hayAlertas = FALSE
+        KI i = 0
+        WHILE i < SELF.cantidad {
+            IF SELF.productos[i].stockBajo() {
+                SCOUTER "  ⚠️  " + SELF.productos[i]
+                hayAlertas = TRUE
+            }
+            i = i + 1
+        }
+        IF NOT hayAlertas {
+            SCOUTER "  ✓ No hay productos con stock bajo."
+        }
+    }
+    
+    # Realizar una venta (retorna la Venta creada o NULL si falla)
+    TECHNIQUE vender(nombreProducto, cantidad) {
+        KI producto = SELF.buscarPorNombre(nombreProducto)
+        
+        IF producto == NULL {
+            SCOUTER "✗ ERROR: Producto '" + nombreProducto + "' no encontrado."
+            RETURN NULL
+        }
+        
+        IF producto.getStock() < cantidad {
+            SCOUTER "✗ ERROR: Stock insuficiente de '" + nombreProducto + "'."
+            SCOUTER "  Disponible: " + producto.getStock() + " | Solicitado: " + cantidad
+            RETURN NULL
+        }
+        
+        # Reducir stock y crear la venta
+        producto.reducirStock(cantidad)
+        KI venta = CREATE Venta(producto, cantidad)
+        SCOUTER "✓ " + venta
+        RETURN venta
+    }
+}
+
+# --------------------------------------------------------------------------
+# Clase Venta - Registra cada transacción de venta
+# --------------------------------------------------------------------------
+WARRIOR Venta {
+    contador = 0    # contador de clase para numerar ventas
+    
+    TECHNIQUE __init__(producto, cantidad) {
+        SELF.producto = producto
+        SELF.cantidad = cantidad
+        SELF._total = producto.getPrecio() * cantidad
+        SELF.numero = Venta.contador
+        Venta.contador = Venta.contador + 1
+    }
+    
+    TECHNIQUE getTotal() {
+        RETURN SELF._total
+    }
+    
+    TECHNIQUE __str__() {
+        RETURN "Venta #" + SELF.numero + ": " + SELF.cantidad + "x " + SELF.producto.nombre + " = $" + SELF._total
+    }
+}
+
+# ==========================================================================
+#  PROGRAMA PRINCIPAL - Demo del sistema de inventario
+# ==========================================================================
+
+# Crear el inventario
+KI miInventario = CREATE Inventario()
+SCOUTER ""
+
+# Agregar productos al inventario
+SCOUTER "--- AGREGANDO PRODUCTOS ---"
+KI laptop = CREATE Producto("Laptop Gamer", 1200, 10, "LAP001")
+KI mouse = CREATE Producto("Mouse Inalámbrico", 25, 50, "MOU001")
+KI teclado = CREATE Producto("Teclado Mecánico", 80, 3, "TEC001")
+KI monitor = CREATE Producto("Monitor 27 pulgadas", 350, 8, "MON001")
+KI audifonos = CREATE Producto("Audífonos Bluetooth", 60, 2, "AUD001")
+
+miInventario.agregar(laptop)
+miInventario.agregar(mouse)
+miInventario.agregar(teclado)
+miInventario.agregar(monitor)
+miInventario.agregar(audifonos)
+SCOUTER ""
+
+# Listar inventario completo
+miInventario.listar()
+SCOUTER ""
+
+# Calcular valor total del inventario
+SCOUTER "--- VALOR TOTAL DEL INVENTARIO ---"
+SCOUTER "Valor total: $" + miInventario.valorTotal()
+SCOUTER ""
+
+# Verificar alertas de stock bajo
+miInventario.alertasStockBajo()
+SCOUTER ""
+
+# Realizar ventas
+SCOUTER "--- REALIZANDO VENTAS ---"
+KI venta1 = miInventario.vender("Laptop Gamer", 2)
+KI venta2 = miInventario.vender("Mouse Inalámbrico", 5)
+KI venta3 = miInventario.vender("Audífonos Bluetooth", 1)
+SCOUTER ""
+
+# Intentar venta con stock insuficiente
+SCOUTER "--- INTENTANDO VENTA CON STOCK INSUFICIENTE ---"
+KI venta4 = miInventario.vender("Teclado Mecánico", 10)
+SCOUTER ""
+
+# Intentar venta de producto inexistente
+SCOUTER "--- INTENTANDO VENTA DE PRODUCTO INEXISTENTE ---"
+KI venta5 = miInventario.vender("Tablet", 1)
+SCOUTER ""
+
+# Listar inventario actualizado después de las ventas
+SCOUTER "--- INVENTARIO ACTUALIZADO ---"
+miInventario.listar()
+SCOUTER ""
+
+# Verificar alertas después de las ventas
+miInventario.alertasStockBajo()
+SCOUTER ""
+
+# Buscar productos específicos
+SCOUTER "--- BÚSQUEDA DE PRODUCTOS ---"
+KI prod = miInventario.buscarPorCodigo("MON001")
+IF prod != NULL {
+    SCOUTER "Producto encontrado por código: " + prod
+}
+SCOUTER ""
+
+# Comparar precios (usando sobrecarga de operadores)
+SCOUTER "--- COMPARACIÓN DE PRECIOS ---"
+IF laptop > monitor {
+    SCOUTER laptop.nombre + " es más caro que " + monitor.nombre
+} ELSE {
+    SCOUTER monitor.nombre + " es más caro que " + laptop.nombre
+}
+SCOUTER ""
+
+# Reponer stock
+SCOUTER "--- REPONIENDO STOCK ---"
+teclado.agregarStock(20)
+SCOUTER "✓ Stock de " + teclado.nombre + " reabastecido. Nuevo stock: " + teclado.getStock()
+SCOUTER ""
+
+# Verificar que ya no hay alertas para ese producto
+miInventario.alertasStockBajo()
+SCOUTER ""
+
+SCOUTER "===== Fin del Demo del Inventario ====="

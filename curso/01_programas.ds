@@ -1,0 +1,27 @@
+# =====================================================================
+# LECCION 01 - PROGRAMAS
+# =====================================================================
+# Un PROGRAMA es una secuencia de instrucciones que la computadora
+# ejecuta de arriba hacia abajo, una detras de otra.
+#
+# En DragonScript la instruccion mas basica es SCOUTER, que MUESTRA
+# (imprime) un valor en pantalla. Es como el rastreador (scouter) de
+# los saiyajin: sirve para "leer" un dato y mostrarlo.
+#
+# Para ejecutar este programa en Windows:
+#     python main.py examples\curso\01_programas.ds
+# =====================================================================
+
+# Cada linea que empieza con '#' es un COMENTARIO: la computadora lo
+# ignora. Sirve para dejar notas a los humanos que leen el codigo.
+
+SCOUTER "Bienvenido al planeta Vegeta"
+SCOUTER "Comienza tu entrenamiento como programador"
+
+# El orden importa: estas dos lineas se muestran en el orden escrito.
+SCOUTER "Paso 1: encender el scouter"
+SCOUTER "Paso 2: medir el poder de pelea"
+
+# Tambien podemos mostrar numeros y resultados de cuentas.
+SCOUTER 9000
+SCOUTER 9000 + 1

@@ -1,0 +1,34 @@
+# =====================================================================
+# LECCION 07 - FUNCIONES SIMPLES
+# =====================================================================
+# Un PROCEDIMIENTO hace cosas (muestra, repite...). Una FUNCION, en
+# cambio, CALCULA y DEVUELVE un valor que podemos usar en otro lugar.
+#
+# Para devolver un valor usamos TRANSMITIR (transmitir el resultado,
+# como quien transmite energia). Apenas se ejecuta TRANSMITIR, la
+# tecnica termina y entrega ese valor.
+# =====================================================================
+
+# CONTRATO: doble(n)
+#   Proposito: devuelve el doble de un numero.
+#   Parametro: n (numero). Devuelve: numero.
+TECNICA doble(n) {
+    TRANSMITIR n * 2
+}
+
+# CONTRATO: poderTotal(base, multiplicador)
+#   Proposito: calcula el poder final aplicando una transformacion.
+#   Devuelve: numero.
+TECNICA poderTotal(base, multiplicador) {
+    TRANSMITIR base * multiplicador
+}
+
+# El valor devuelto se puede guardar en una variable...
+KI resultado = doble(21)
+SCOUTER "El doble de 21 es " + resultado
+
+# ...o usarse directamente dentro de otra expresion.
+SCOUTER "Poder de Goku en SSJ: " + poderTotal(9000, 50)
+
+# ...incluso combinar funciones entre si.
+SCOUTER "El doble del doble de 10 es " + doble(doble(10))

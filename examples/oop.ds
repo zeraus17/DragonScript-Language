@@ -1,0 +1,154 @@
+# ==========================================================================
+#  oop.ds  —  Programación Orientada a Objetos (POO) en DragonScript
+# --------------------------------------------------------------------------
+#  Demuestra TODAS las capacidades de POO del lenguaje:
+#    * Clases (WARRIOR) y objetos (CREATE)
+#    * Constructor __init__ y atributos de instancia con SELF
+#    * Métodos de instancia
+#    * Atributos de clase (compartidos) y métodos estáticos (STATIC)
+#    * Encapsulación: los miembros que empiezan por "_" son privados
+#    * Herencia simple (EVOLVES) y llamada al constructor del padre
+#    * Herencia múltiple (EVOLVES A, B) con orden de resolución (MRO)
+#    * Sobrecarga de operadores (__add__, __eq__, __gt__, ...)
+#    * Representación en texto con __str__
+# ==========================================================================
+
+SCOUTER "===== DragonScript POO: El torneo de los guerreros ====="
+SCOUTER ""
+
+# --------------------------------------------------------------------------
+# 1) Clase base con constructor, encapsulación y __str__
+# --------------------------------------------------------------------------
+WARRIOR Character {
+    # Atributo de CLASE (compartido por todas las instancias).
+    planeta = "Tierra"
+
+    TECHNIQUE __init__(name, power) {
+        SELF.name = name       # atributo público
+        SELF._power = power     # atributo PRIVADO (empieza por "_")
+    }
+
+    # Getter para leer el poder privado desde fuera de la clase.
+    TECHNIQUE getPower() {
+        RETURN SELF._power
+    }
+
+    TECHNIQUE powerUp(amount) {
+        SELF._power = SELF._power + amount
+    }
+
+    # Sobrecarga de operadores de comparación por poder.
+    TECHNIQUE __gt__(other) {
+        RETURN SELF._power > other.getPower()
+    }
+
+    TECHNIQUE __eq__(other) {
+        RETURN SELF._power == other.getPower()
+    }
+
+    # Representación en texto (la usa SCOUTER automáticamente).
+    TECHNIQUE __str__() {
+        RETURN SELF.name + " [poder " + SELF._power + "]"
+    }
+}
+
+# --------------------------------------------------------------------------
+# 2) Herencia simple: Saiyajin EVOLVES Character
+# --------------------------------------------------------------------------
+WARRIOR Saiyajin EVOLVES Character {
+    # Contador de instancias (atributo de clase compartido).
+    count = 0
+
+    TECHNIQUE __init__(name, power) {
+        # Llamada al constructor del padre pasando SELF explícito.
+        Character.__init__(SELF, name, power)
+        SELF.race = "Saiyajin"
+    }
+
+    TECHNIQUE transform() {
+        SELF.powerUp(SELF.getPower())   # ¡Super Saiyajin: duplica el poder!
+        RETURN SELF.name + " se transforma en Super Saiyajin"
+    }
+
+    # Sobrecarga del operador + para fusionar dos guerreros.
+    TECHNIQUE __add__(other) {
+        KI combinado = SELF.getPower() + other.getPower()
+        RETURN CREATE Saiyajin("Gogeta", combinado)
+    }
+
+    # Método ESTÁTICO: se llama sobre la clase, no sobre una instancia.
+    STATIC TECHNIQUE species() {
+        RETURN "Homo Saiyajin"
+    }
+}
+
+# --------------------------------------------------------------------------
+# 3) Herencia múltiple con MRO (orden de resolución de métodos)
+# --------------------------------------------------------------------------
+WARRIOR Flyer {
+    TECHNIQUE move() { RETURN "volando por los cielos" }
+}
+
+WARRIOR KiUser {
+    TECHNIQUE move() { RETURN "tele-transportándose" }
+    TECHNIQUE fireBlast() { RETURN "¡KAMEHAMEHA!" }
+}
+
+# Amphibian hereda de Flyer y KiUser: move() se resuelve en Flyer (primero).
+WARRIOR HybridFighter EVOLVES Flyer, KiUser {
+    TECHNIQUE __init__(name) { SELF.name = name }
+}
+
+# ==========================================================================
+#  Programa principal
+# ==========================================================================
+
+# --- Objetos y métodos -----------------------------------------------------
+KI goku = CREATE Saiyajin("Goku", 9000)
+KI vegeta = CREATE Saiyajin("Vegeta", 8500)
+
+SCOUTER "-- Guerreros creados --"
+SCOUTER goku          # usa __str__  ->  Goku [poder 9000]
+SCOUTER vegeta
+SCOUTER ""
+
+# --- Atributos de clase y de instancia ------------------------------------
+SCOUTER "Raza de Goku: " + goku.race
+SCOUTER "Planeta (atributo de clase): " + goku.planeta
+SCOUTER "Especie (método estático): " + Saiyajin.species()
+SCOUTER ""
+
+# --- Sobrecarga de operadores de comparación ------------------------------
+SCOUTER "-- ¿Quién es más fuerte? --"
+IF goku > vegeta {
+    SCOUTER goku.name + " es más fuerte que " + vegeta.name
+} ELSE {
+    SCOUTER vegeta.name + " es más fuerte que " + goku.name
+}
+SCOUTER ""
+
+# --- Transformación (modifica estado interno) -----------------------------
+SCOUTER "-- Transformación --"
+SCOUTER vegeta.transform()
+SCOUTER vegeta
+SCOUTER ""
+
+# --- Sobrecarga del operador + (fusión) -----------------------------------
+SCOUTER "-- Fusión (operador +) --"
+KI gogeta = goku + vegeta
+SCOUTER gogeta
+SCOUTER ""
+
+# --- Encapsulación: el poder privado se lee mediante un getter ------------
+SCOUTER "-- Encapsulación --"
+SCOUTER "Poder de Gogeta (vía getPower): " + gogeta.getPower()
+SCOUTER ""
+
+# --- Herencia múltiple y MRO ----------------------------------------------
+SCOUTER "-- Herencia múltiple --"
+KI hero = CREATE HybridFighter("Piccolo")
+SCOUTER hero.name + " se está " + hero.move()   # move() viene de Flyer
+SCOUTER hero.name + " usa " + hero.fireBlast()  # fireBlast() viene de KiUser
+SCOUTER ""
+
+SCOUTER "===== ¡Fin del torneo! ====="

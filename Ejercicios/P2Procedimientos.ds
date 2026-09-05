@@ -1,0 +1,27 @@
+# Practica Procedimientos
+# Ejercicio 1: PonerUnaDeCada() que ponga una esfera de cada color en la celda actual.
+# TECNICA PonerUnaDeCada() 
+#   - Pone una esfera de cada estrella en la celda actual.
+#   - Pre: Ninguna
+#   - Carga ESFERA_1, ESFERA_2, ESFERA_3, ESFERA_4
+# PonerUnaDeCada()
+# Luego MOSTRAR_TABLERO()
+
+# Ejercicio 2: Mover3VecesAlOeste() que mueva el cabezal tres celdas hacia el Oeste.
+INICIAR_TABLERO(4, 4)
+
+
+TECNICA Mover3VecesAlOeste() {
+    GRAVEDAD 3 {
+        VOLAR(OESTE)
+    }
+}
+
+# 3. Posicionamos primero el cabezal en la celda deseada (3, 2)
+IR_AL_ORIGEN(3, 2)
+
+# 4. Ahora sí ejecutamos el movimiento de 3 celdas al Oeste
+Mover3VecesAlOeste()
+
+# 5. Mostramos el estado final del tablero
+MOSTRAR_TABLERO()

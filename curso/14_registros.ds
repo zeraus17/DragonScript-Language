@@ -1,0 +1,54 @@
+# =====================================================================
+# LECCION 14 - REGISTROS Y VARIANTES
+# =====================================================================
+# Un REGISTRO agrupa varios datos relacionados bajo una sola entidad.
+# En vez de tener sueltos "nombre", "poder" y "raza", los juntamos en
+# un CAPSULA que tiene esos CAMPOS.
+#
+#   * Definir el registro:   CAPSULA Nombre { ... }
+#   * Crear uno (ACTIVAR):    ACTIVAR Nombre(...)
+#   * Acceder a un campo:     objeto.campo
+#   * Modificar un campo:     YO.campo = valor  (dentro de la tecnica)
+#
+# Las VARIANTES son distintos "tipos" del mismo concepto. Aca las
+# modelamos con un campo 'raza' que puede tomar distintos valores.
+# =====================================================================
+
+# CONTRATO: registro CAPSULA
+#   Campos: nombre (texto), raza (texto), poder (numero).
+CAPSULA Peleador {
+    TECNICA __init__(nombre, raza, poder) {
+        YO.nombre = nombre
+        YO.raza = raza
+        YO.poder = poder
+    }
+
+    # Acceder a los campos para armar una ficha.
+    TECNICA ficha() {
+        TRANSMITIR YO.nombre + " [" + YO.raza + "] poder=" + YO.poder
+    }
+
+    # Modificar un campo: subir el poder al transformarse.
+    TECNICA transformar() {
+        YO.poder = YO.poder * 2
+    }
+}
+
+# Crear (ACTIVAR) varios registros, incluyendo distintas variantes (razas).
+KI goku = ACTIVAR Peleador("Goku", "Saiyajin", 9000)
+KI piccolo = ACTIVAR Peleador("Piccolo", "Namekiano", 3000)
+KI krillin = ACTIVAR Peleador("Krillin", "Humano", 1000)
+
+# Acceder a campos individuales.
+SCOUTER "Nombre del primero: " + goku.nombre
+SCOUTER "Raza del segundo: " + piccolo.raza
+
+# Usar los metodos del registro.
+SCOUTER goku.ficha()
+SCOUTER piccolo.ficha()
+SCOUTER krillin.ficha()
+
+# Modificar un campo mediante un metodo.
+SCOUTER "Goku se transforma en Super Saiyajin!"
+goku.transformar()
+SCOUTER goku.ficha()

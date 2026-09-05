@@ -1,0 +1,38 @@
+# Demostración de DragonScript en VS Code
+# Este archivo muestra cómo se verá el syntax highlighting
+
+KI power = 9000
+KI nombre = "Goku"
+KI es_saiyan = TRUE
+
+SCOUTER "=== Información del Guerrero ==="
+SCOUTER nombre
+SCOUTER power
+
+IF power > 8000 {
+    SCOUTER "¡Es más de 8000!"
+    SCOUTER "¡Increíble!"
+} ELSE {
+    SCOUTER "Poder normal"
+}
+
+# Función de entrenamiento
+TECHNIQUE entrenar(guerrero, ki_ganado) {
+    SCOUTER "¡Entrenando!"
+    RETURN guerrero + ki_ganado
+}
+
+# Bucle de entrenamiento
+GRAVITY 5 {
+    power = entrenar(power, 100)
+    SCOUTER power
+}
+
+# Bucle while
+KI contador = 0
+WHILE contador < 3 {
+    SCOUTER "Contador: " + STR(contador)
+    contador += 1
+}
+
+SCOUTER "=== Entrenamiento completado ==="

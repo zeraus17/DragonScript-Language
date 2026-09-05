@@ -1,0 +1,58 @@
+# =====================================================================
+# LECCION 16 - RECORRIDOS Y PROCESAMIENTO DE LISTAS
+# =====================================================================
+# Combinamos todo lo aprendido: recorremos listas con RASTREAR y las
+# procesamos para producir NUEVOS resultados. Tres patrones clasicos:
+#
+#   * TRANSFORMAR: crear una lista nueva aplicando algo a cada elemento.
+#   * FILTRAR: crear una lista nueva solo con los que cumplen algo.
+#   * REDUCIR: combinar todos los elementos en un unico valor.
+# =====================================================================
+
+KI poderes = [500, 9500, 1200, 8000, 300]
+
+# ------------------------------------------------------------------
+# TRANSFORMAR: duplicar cada poder (todos entrenan y suben al doble).
+# ------------------------------------------------------------------
+# CONTRATO: duplicarTodos(lista) -> lista nueva con cada valor x2.
+TECNICA duplicarTodos(lista) {
+    KI resultado = []
+    RASTREAR p EN lista {
+        resultado = ABSORBER(resultado, p * 2)
+    }
+    TRANSMITIR resultado
+}
+SCOUTER "Poderes duplicados:"
+SCOUTER duplicarTodos(poderes)
+
+# ------------------------------------------------------------------
+# FILTRAR: quedarnos solo con los guerreros de elite (poder >= 8000).
+# ------------------------------------------------------------------
+# CONTRATO: soloElite(lista) -> lista nueva con los valores >= 8000.
+TECNICA soloElite(lista) {
+    KI elite = []
+    RASTREAR p EN lista {
+        SENSAR p >= 8000 {
+            elite = ABSORBER(elite, p)
+        }
+    }
+    TRANSMITIR elite
+}
+SCOUTER "Solo los de elite (>= 8000):"
+SCOUTER soloElite(poderes)
+
+# ------------------------------------------------------------------
+# REDUCIR: sumar y promediar todos los poderes.
+# ------------------------------------------------------------------
+# CONTRATO: sumarTodos(lista) -> numero, la suma de todos los elementos.
+TECNICA sumarTodos(lista) {
+    KI total = 0
+    RASTREAR p EN lista {
+        total += p
+    }
+    TRANSMITIR total
+}
+
+KI suma = sumarTodos(poderes)
+SCOUTER "Suma total: " + suma
+SCOUTER "Promedio: " + (suma / LONGITUD(poderes))

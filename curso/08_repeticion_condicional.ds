@@ -1,0 +1,33 @@
+# =====================================================================
+# LECCION 08 - REPETICION CONDICIONAL
+# =====================================================================
+# La repeticion simple (GRAVEDAD) sirve cuando sabemos CUANTAS veces
+# repetir. Pero muchas veces no lo sabemos: queremos repetir MIENTRAS
+# se cumpla una condicion. Para eso usamos ENTRENAR (seguir entrenando
+# mientras haga falta):
+#
+#     ENTRENAR <condicion> {
+#         ... se repite mientras la condicion sea verdadera ...
+#     }
+#
+# CUIDADO: dentro del ciclo algo debe cambiar para que la condicion
+# eventualmente sea falsa; si no, el ciclo nunca termina.
+# =====================================================================
+
+# Contar de 3 a 1 (cuenta regresiva para el torneo).
+KI cuenta = 3
+ENTRENAR cuenta > 0 {
+    SCOUTER "Faltan " + cuenta + " para empezar el torneo"
+    cuenta -= 1
+}
+SCOUTER "Que comience la pelea!"
+
+SCOUTER "---"
+
+# Entrenar hasta alcanzar un objetivo de poder.
+KI poder = 100
+ENTRENAR poder < 1000 {
+    poder = poder * 2
+    SCOUTER "Nuevo poder tras entrenar: " + poder
+}
+SCOUTER "Objetivo alcanzado con poder " + poder

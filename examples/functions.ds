@@ -1,0 +1,18 @@
+# Funciones (TECHNIQUE)
+TECHNIQUE entrenar(guerrero, cantidad) {
+    RETURN guerrero + cantidad
+}
+
+KI ki_base = 1000
+KI ki_final = entrenar(ki_base, 500)
+SCOUTER ki_final
+
+# Recursividad
+TECHNIQUE factorial(n) {
+    IF n <= 1 {
+        RETURN 1
+    }
+    RETURN n * factorial(n - 1)
+}
+
+SCOUTER factorial(5)

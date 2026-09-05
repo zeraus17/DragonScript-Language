@@ -1,0 +1,101 @@
+# Practica Parametros
+# Ejercicio 1: Escribir un procedimiento Mover3VecesAl_(direcciónAMover) que dada una dirección 
+# mueva el cabezal tres posiciones en dicha dirección.
+
+INICIAR_TABLERO(4, 4)
+
+TECNICA Mover3VecesAl_(direccionAMover) {
+    # Mueve el cabezal tres celdas en la dirección indicada por el parámetro direcciónAMover.
+    # Pre: Al menos debe haber tres celdas hacia direcciónAMover partiendo de la posición actual.
+    # Param: direcciónAMover - Tipo: Dirección - Indica la dirección en la que se mueve el cabezal.
+    GRAVEDAD 3 {
+        VOLAR(direccionAMover)
+    }
+}
+
+Mover3VecesAl_(NORTE)
+
+MOSTRAR_TABLERO()
+
+# Ejercicio 2: Escribir un procedimiento Poner6DeEstrellas_(esferaAPoner) que dado un color ponga 6 esferas
+# INICIAR_TABLERO(4, 4)
+# TECNICA Poner6DeEstrellas_(esferaAPoner) {
+#     # Pone 6 esferas de estrellas esferaAPoner en la celda actual.
+#     # Pre: Ninguna
+#     GRAVEDAD 6 {
+#         CARGAR(esferaAPoner)
+#     }
+# }
+# Poner6DeEstrellas_(ESFERA_1)
+# MOSTRAR_TABLERO()
+
+# Ejercicio 3: Escribir un procedimiento Poner_Al_(esferaAPoner, direcciónDondePoner) 
+# que ponga una esfera en la celda vecina en la dirección dada, dejando el cabezal en dicha celda.
+# INICIAR_TABLERO(4, 4)
+# TECNICA Poner_Al_(esferaAPoner, direccionDondePoner) {
+#     # Pone una esfera de estrellas esferaAPoner en la celda vecina en la dirección direccionDondePoner.
+#     # Pre: Debe haber una celda vecina en la dirección direccionDondePoner.
+#     # Param: esferaAPoner - Tipo: Esfera - Indica la esfera que se pone en la celda vecina.
+#     # Param: direccionDondePoner - Tipo: Dirección - Indica la dirección en la que se pone la esfera.
+#     VOLAR(direccionDondePoner)
+#     CARGAR(esferaAPoner)
+# }
+# Poner_Al_(ESFERA_4, ESTE)
+# MOSTRAR_TABLERO()
+
+# Ejercicio 4: Escribir ReemplazarUnaDe_Por_(esferaAReemplazar, esferaPorElCualReemplazar)
+# INICIAR_TABLERO(4, 4)
+# CARGAR(ESFERA_2)
+# TECNICA ReemplazarUnaDe_Por_(esferaAReemplazar, esferaPorElCualReemplazar) {
+#     # En la celda actual, reemplaza una bolita del primer esfera por una del segundo esfera
+#     # Pre: Debe haber al menos una esfera esferaAReemplazar en la celda actual.
+#     # Param: esferaAReemplazar - Tipo: Esfera - Indica la esfera que se reemplaza.
+#     # Param: esferaPorElCualReemplazar - Tipo: Esfera - Indica la esfera que reemplaza a la primera.
+#     DRENAR(esferaAReemplazar)
+#     CARGAR(esferaPorElCualReemplazar)
+# }
+# ReemplazarUnaDe_Por_(ESFERA_2, ESFERA_3)
+# MOSTRAR_TABLERO()
+
+# ====================================================================================
+# BIBLIOTECA
+# ====================================================================================
+
+# Ejercicio: Escribir un procedimiento Poner_DeEstrellas_(cantidadAPoner, esferaAPoner)
+# que ponga tantas esferas como se indica en la celda actual.
+# INICIAR_TABLERO(4, 4)
+# TECNICA Poner_DeEstrellas_(cantidadAPoner, esferaAPoner) {
+#     # Pone tantas esferas como se indica de la esfera dada de la celda actual.
+#     # Pre: Ninguna
+#     # Param: cantidadAPoner - Tipo: Entero - Indica la cantidad de esferas que se ponen en la celda actual.
+#     # Param: esferaAPoner - Tipo: Esfera - Indica la esfera que se pone en la celda actual.
+#     GRAVEDAD cantidadAPoner {
+#         CARGAR(esferaAPoner)
+#     }
+# }
+# Poner_DeEstrellas_(6, ESFERA_1)
+# MOSTRAR_TABLERO()
+
+
+#======================================================================================================================================
+#BIBLIOTECA
+
+#Escribir un procedimiento Poner_DeEstrellas_(cantidadAPoner, esferaAPoner) que dado un número
+#cantidadAPoner y una esfera esferaAPoner, ponga tantas esferas como se indica de la esfera dada de la celda actual.
+
+# INICIAR_TABLERO(4, 4)
+
+# TECNICA Poner_DeEstrellas_(cantidadAPoner, esferaAPoner) {
+# #Pone tantas esferas como se indica de la esfera dada de la celda actual.
+# #Pre: Ninguna
+# #Param: **cantidadAPoner** - Tipo: Entero - Indica la cantidad de esferas que se ponen en la celda actual.
+# #Param: **esferaAPoner** - Tipo: Esfera - Indica la esfera que se pone en la celda actual.
+
+#     GRAVEDAD cantidadAPoner {
+#         CARGAR(esferaAPoner)
+#     }
+# }
+
+
+# Poner_DeEstrellas_(6, ESFERA_1)
+# MOSTRAR_TABLERO()

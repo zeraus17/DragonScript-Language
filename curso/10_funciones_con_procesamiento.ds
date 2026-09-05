@@ -1,0 +1,42 @@
+# =====================================================================
+# LECCION 10 - FUNCIONES CON PROCESAMIENTO
+# =====================================================================
+# Hasta ahora nuestras funciones devolvian una cuenta directa. Ahora
+# veremos funciones que, para calcular su resultado, hacen un PROCESO
+# interno: usan variables locales, condicionales y hasta ciclos antes
+# de TRANSMITIR la respuesta.
+# =====================================================================
+
+# CONTRATO: mayor(a, b)
+#   Proposito: devuelve el mayor de dos numeros.
+TECNICA mayor(a, b) {
+    SENSAR a > b {
+        TRANSMITIR a
+    } ESQUIVAR {
+        TRANSMITIR b
+    }
+}
+
+# CONTRATO: factorial(n)
+#   Proposito: devuelve n! (n * (n-1) * ... * 1). Usa un acumulador.
+#   Precondicion: n debe ser un entero mayor o igual a 0.
+TECNICA factorial(n) {
+    KI resultado = 1
+    KI i = 1
+    ENTRENAR i <= n {
+        resultado *= i
+        i += 1
+    }
+    TRANSMITIR resultado
+}
+
+# CONTRATO: esFuerte(poder)
+#   Proposito: devuelve CANON si el poder supera 9000, si no RELLENO.
+TECNICA esFuerte(poder) {
+    TRANSMITIR poder > 9000
+}
+
+SCOUTER "El mayor entre 700 y 1500 es " + mayor(700, 1500)
+SCOUTER "5! = " + factorial(5)
+SCOUTER "Goku (9500) es fuerte? " + esFuerte(9500)
+SCOUTER "Yamcha (1000) es fuerte? " + esFuerte(1000)

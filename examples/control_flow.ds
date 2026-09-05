@@ -1,0 +1,19 @@
+# Control de flujo
+KI power = 9000
+
+SCOUTER power
+
+IF power > 8000 {
+    SCOUTER "¡Es más de 8000!"
+}
+
+KI i = 0
+WHILE i < 3 {
+    SCOUTER i
+    i += 1
+}
+
+# GRAVITY: bucle temático que ejecuta N veces
+GRAVITY 5 {
+    SCOUTER "¡Entrenando bajo gravedad!"
+}

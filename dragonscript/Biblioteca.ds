@@ -1,0 +1,36 @@
+# Standard library de DragonScript
+
+TECNICA MOVER_N(pasos, direccion) {
+    WHILE pasos > 0 {
+        VOLAR(direccion)
+        pasos = pasos - 1
+    }
+}
+
+TECNICA PONER_N(cantidad, esfera) {
+    WHILE cantidad > 0 {
+        CARGAR(esfera)
+        cantidad = cantidad - 1
+    }
+}
+
+TECNICA DRENAR_N(cantidad, esfera) {
+    WHILE cantidad > 0 {
+        DRENAR(esfera)
+        cantidad = cantidad - 1
+    }
+}
+
+TECNICA IR_AL_ORIGEN(x, y) {
+    # 1. Lleva el cabezal al origen (0,0)
+    WHILE PUEDE_VOLAR(OESTE) {
+        VOLAR(OESTE)
+    }
+    WHILE PUEDE_VOLAR(SUR) {
+        VOLAR(SUR)
+    }
+
+    # 2. Desplaza el cabezal a la celda objetivo (x, y)
+    MOVER_N(x, ESTE)
+    MOVER_N(y, NORTE)
+}

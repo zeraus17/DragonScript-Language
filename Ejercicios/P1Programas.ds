@@ -1,0 +1,13 @@
+INICIAR_TABLERO(4, 4)
+
+ TECNICA PonerUnaDeCada() {
+#     Pone una esfera de cada estrella en la celda actual.
+#     Pre: Ninguna
+     CARGAR(ESFERA_1)
+     CARGAR(ESFERA_2)
+     CARGAR(ESFERA_3)
+     CARGAR(ESFERA_4)
+ }
+
+ PonerUnaDeCada()
+ MOSTRAR_TABLERO()

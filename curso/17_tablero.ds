@@ -1,0 +1,73 @@
+# =====================================================================
+# LECCION 17 - EL TABLERO (estilo Gobstones)
+# =====================================================================
+# El TABLERO es una cuadricula de celdas. Sobre el se para el GUERRERO
+# (el "cabezal"), que puede VOLAR por las celdas y CARGAR o DRENAR
+# Esferas del Dragon.
+#
+#   * El origen (0,0) esta abajo a la izquierda.
+#   * VOLAR NORTE sube (y+1), VOLAR SUR baja (y-1),
+#     VOLAR ESTE va a la derecha (x+1), VOLAR OESTE a la izquierda (x-1).
+#
+# Comandos del tablero:
+#   INICIAR_TABLERO(ancho, alto)  -> arma un tablero vacio
+#   VOLAR(direccion)              -> mueve el GUERRERO
+#   PUEDE_VOLAR(direccion)        -> CANON/RELLENO si puede moverse
+#   CARGAR(esfera)                -> pone una Esfera en la celda actual
+#   DRENAR(esfera)                -> saca una Esfera de la celda actual
+#   HAY(esfera)                   -> hay al menos una?
+#   CUANTAS(esfera)               -> cuantas hay en la celda actual
+#   POSICION_X() / POSICION_Y()   -> coordenadas del GUERRERO
+#   MOSTRAR_TABLERO()             -> dibuja el tablero
+#
+# Esferas: ESFERA_1 (1 estrella) .. ESFERA_4 (4 estrellas)
+# Direcciones: NORTE, SUR, ESTE, OESTE
+# =====================================================================
+
+# Armamos un tablero de 4 columnas por 3 filas.
+INICIAR_TABLERO(4, 4)
+
+SCOUTER "El GUERRERO arranca en el origen:"
+SCOUTER "  x = " + STR(POSICION_X()) + ", y = " + STR(POSICION_Y())
+
+# Cargamos algunas esferas en la celda inicial (0,0).
+CARGAR(ESFERA_1)
+CARGAR(ESFERA_1)
+CARGAR(ESFERA_3)
+
+# El GUERRERO vuela hacia el este y carga otra esfera.
+VOLAR(ESTE)
+CARGAR(ESFERA_2)
+
+# Ahora sube (norte) y carga dos esferas de 4 estrellas.
+VOLAR(NORTE)
+CARGAR(ESFERA_4)
+CARGAR(ESFERA_4)
+
+SCOUTER ""
+SCOUTER "Tablero luego de cargar esferas:"
+MOSTRAR_TABLERO()
+
+# Consultas sobre la celda actual (1,1).
+SCOUTER ""
+SCOUTER "En la celda actual hay ESFERA_4? " + STR(HAY(ESFERA_4))
+SCOUTER "Cuantas ESFERA_4? " + STR(CUANTAS(ESFERA_4))
+
+# Antes de volar, siempre conviene preguntar si se puede.
+SENSAR (PUEDE_VOLAR(NORTE)) {
+    VOLAR(NORTE)
+    SCOUTER "El GUERRERO subio al borde superior."
+} ESQUIVAR {
+    SCOUTER "No se puede subir mas: hay borde."
+}
+
+# Drenar (sacar) una esfera de una celda.
+# Estamos en (1,2). Para volver al origen (0,0): bajar 2 y ir 1 al oeste.
+VOLAR(SUR)
+VOLAR(SUR)
+VOLAR(OESTE)
+SCOUTER ""
+SCOUTER "Volvimos al origen (x=" + STR(POSICION_X()) + ", y=" + STR(POSICION_Y()) + ")."
+SCOUTER "Drenamos una ESFERA_1..."
+DRENAR(ESFERA_1)
+SCOUTER "Quedan " + STR(CUANTAS(ESFERA_1)) + " ESFERA_1 en el origen."

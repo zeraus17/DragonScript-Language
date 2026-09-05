@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DragonScript Web Playground 🐉</title>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+
+    <script src="dragonscript_engine.js"></script>
+
+   
+
+    <style>
+
+        * { box-sizing: border-box; }
+
+        body { font-family: monospace; background-color: #121212; color: #fff; margin: 0; padding: 15px; }
+
+        h1 { color: #ff9900; margin-top: 0; font-size: 20px; text-align: center; }
+
+        #status { text-align: center; font-size: 13px; color: #ffaa00; margin-bottom: 10px; font-weight: bold; }
+
+
+
+        .main-layout { display: flex; flex-direction: column; gap: 15px; }
+
+        @media (min-width: 768px) {
+
+            .main-layout { flex-direction: row; height: 85vh; }
+
+        }
+
+
+
+        .editor-section { flex: 1; display: flex; flex-direction: column; gap: 10px; min-height: 350px; }
+
+        .board-section { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+
+        @media (min-width: 768px) {
+
+            .board-section { width: 360px; }
+
+        }
+
+
+
+        /* Pestañas */
+
+        .tabs { display: flex; gap: 5px; border-bottom: 2px solid #333; }
+
+        .tab-btn {
+
+            background: #222;
+
+            color: #aaa;
+
+            border: 1px solid #333;
+
+            border-bottom: none;
+
+            padding: 8px 16px;
+
+            cursor: pointer;
+
+            font-family: monospace;
+
+            font-weight: bold;
+
+            border-radius: 6px 6px 0 0;
+
+        }
+
+        .tab-btn.active { background: #ff9900; color: #000; border-color: #ff9900; }
+
+
+
+        .tab-content { display: none; flex: 1; flex-direction: column; }
+
+        .tab-content.active { display: flex; }
+
+
+
+        .file-toolbar {
+
+            display: flex;
+
+            gap: 6px;
+
+            background: #181818;
+
+            padding: 6px;
+
+            border: 1px solid #333;
+
+            border-bottom: none;
+
+        }
+
+        .file-toolbar button, .file-toolbar label {
+
+            background: #2a2a2a;
+
+            color: #ccc;
+
+            font-size: 11px;
+
+            padding: 4px 8px;
+
+            border: 1px solid #444;
+
+            border-radius: 4px;
+
+            cursor: pointer;
+
+        }
+
+
+
+        /* Contenedor del Editor de Doble Capa */
+
+        .editor-wrapper {
+
+            position: relative;
+
+            flex: 1;
+
+            min-height: 250px;
+
+            background: #1e1e1e;
+
+            border: 1px solid #333;
+
+            border-radius: 0 0 6px 6px;
+
+            overflow: hidden;
+
+        }
+
+
+
+        .editor-textarea, .editor-highlight {
+
+            position: absolute;
+
+            top: 0; left: 0; width: 100%; height: 100%;
+
+            padding: 12px;
+
+            margin: 0;
+
+            border: none;
+
+            font-family: 'Consolas', 'Courier New', monospace;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+
+            white-space: pre-wrap;
+
+            word-wrap: break-word;
+
+            word-break: break-word;
+
+            tab-size: 4;
+
+            box-sizing: border-box;
+
+            overflow: auto;
+
+        }
+
+
+
+        .editor-textarea {
+
+            z-index: 2;
+
+            color: transparent;
+
+            background: transparent;
+
+            caret-color: #00ff00; /* Color del cursor */
+
+            resize: none;
+
+            outline: none;
+
+            border: 1px solid transparent;
+
+        }
+
+
+
+        .editor-textarea:focus {
+
+            border-color: rgba(255, 153, 0, 0.7);
+
+            box-shadow: inset 0 0 0 1px rgba(255, 153, 0, 0.15);
+
+        }
+
+
+
+        .editor-highlight {
+
+            z-index: 1;
+
+            color: #d4d4d4;
+
+            pointer-events: none;
+
+            overflow: hidden;
+
+            background: #1e1e1e;
+
+        }
+
+
+
+        .editor-textarea::selection {
+
+            background: rgba(80, 250, 123, 0.3);
+
+        }
+
+
+
+        .editor-textarea::-webkit-scrollbar,
+
+        .editor-highlight::-webkit-scrollbar,
+
+        .autocomplete-list::-webkit-scrollbar {
+
+            width: 10px;
+
+            height: 10px;
+
+        }
+
+
+
+        .editor-textarea::-webkit-scrollbar-thumb,
+
+        .editor-highlight::-webkit-scrollbar-thumb,
+
+        .autocomplete-list::-webkit-scrollbar-thumb {
+
+            background: #444;
+
+            border-radius: 8px;
+
+        }
+
+
+
+        .autocomplete-list {
+
+            position: absolute;
+
+            left: 12px;
+
+            right: 12px;
+
+            bottom: 8px;
+
+            max-height: 160px;
+
+            overflow-y: auto;
+
+            background: rgba(20, 20, 20, 0.96);
+
+            border: 1px solid #3a3a3a;
+
+            border-radius: 6px;
+
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+
+            display: none;
+
+            z-index: 5;
+
+        }
+
+
+
+        .autocomplete-item {
+
+            padding: 6px 10px;
+
+            font-size: 12px;
+
+            color: #d4d4d4;
+
+            cursor: pointer;
+
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+
+        }
+
+
+
+        .autocomplete-item:hover,
+
+        .autocomplete-item.active {
+
+            background: #2a3d5a;
+
+            color: #fff;
+
+        }
+
+
+
+        /* PALETA COLORES VS CODE */
+
+        .hl-comment  { color: #6A9955; font-style: italic; }
+
+        .hl-keyword  { color: #C586C0; font-weight: 700; }
+
+        .hl-routine  { color: #4EC9B0; font-weight: 700; }
+
+        .hl-command  { color: #DCDCAA; font-weight: 700; }
+
+        .hl-constant { color: #4FC1FF; }
+
+        .hl-number   { color: #B5CEA8; }
+
+        .hl-string   { color: #CE9178; }
+
+        .hl-identifier { color: #9CDCFE; }
+
+        .hl-operator { color: #D4D4D4; }
+
+
+
+        .hl-comment, .hl-keyword, .hl-routine, .hl-command, .hl-constant,
+
+        .hl-number, .hl-string, .hl-identifier, .hl-operator {
+
+            text-shadow: 0 0 0 rgba(0, 0, 0, 0);
+
+        }
+
+
+
+        button.action-btn { background: #ff9900; color: #000; font-weight: bold; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; }
+
+        button.action-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+
+       
+
+        #output { width: 100%; height: 130px; background: #000; color: #00ff00; font-size: 12px; padding: 10px; border-radius: 6px; overflow-y: auto; white-space: pre-wrap; border: 1px solid #333; }
+
+
+
+        /* GUI Tablero */
+
+        #grid { display: grid; gap: 2px; background: #1a1b26; padding: 6px; border-radius: 6px; width: 100%; max-width: 360px; aspect-ratio: 1; border: 1px solid #333; }
+
+        .cell { background: #282a36; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2px; position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 4px; padding: 2px; overflow: hidden; }
+
+        .cell-coord { position: absolute; top: 2px; left: 2px; font-size: 8px; color: #555; pointer-events: none; }
+
+        .guerrero-cell { border: 2px solid #50fa7b !important; background-color: #21332a !important; }
+
+        .guerrero-tag { position: absolute; top: 2px; right: 2px; font-size: 8px; color: #50fa7b; font-weight: bold; z-index: 3; }
+
+        /* Goku pixel art sprite (cabezal del tablero) */
+        .goku-pixel {
+            position: absolute;
+            left: 50%;
+            top: 52%;
+            transform: translate(-50%, -50%);
+            width: 28px;
+            height: 36px;
+            image-rendering: pixelated;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .goku-pixel .px {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            gap: 0;
+        }
+        .goku-pixel .p { width: 100%; height: 100%; }
+        .goku-pixel .hair { background: #1a1a2e; }
+        .goku-pixel .skin { background: #f0c27a; }
+        .goku-pixel .eye  { background: #111; }
+        .goku-pixel .gi   { background: #f5a623; }
+        .goku-pixel .gi2  { background: #1e88e5; }
+        .goku-pixel .belt { background: #c62828; }
+        .goku-pixel .boot { background: #5d4037; }
+        .goku-pixel .aura { box-shadow: 0 0 6px 2px rgba(80, 250, 123, 0.55); }
+
+        .esfera-orb { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffcc00, #ff6600); box-shadow: 0 0 6px rgba(255, 102, 0, 0.8), inset -2px -2px 4px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #8b0000; font-weight: bold; font-size: 10px; border: 1px solid #ffaa00; user-select: none; z-index: 1; }
+
+
+
+        .controls-bar { display: flex; align-items: center; gap: 8px; width: 100%; background: #1e1e1e; padding: 8px; border-radius: 6px; border: 1px solid #333; }
+
+        .controls-bar button { padding: 6px 10px; font-size: 12px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; width: auto; }
+
+        .slider-container { display: flex; align-items: center; gap: 6px; flex: 1; font-size: 12px; color: #ccc; }
+
+        .slider-container input { flex: 1; }
+
+    </style>
+
+</head>
+
+<body>
+
+
+
+    <h1>DragonScript Playground 🐉</h1>
+
+    <div id="status">⏳ Iniciando motor Python...</div>
+
+
+
+    <div class="main-layout">
+
+        <div class="editor-section">
+
+            <div class="tabs">
+
+                <button class="tab-btn active" onclick="switchTab('program')">📄 Programa</button>
+
+                <button class="tab-btn" onclick="switchTab('library')">📚 Biblioteca</button>
+
+            </div>
+
+
+
+            <div class="file-toolbar">
+
+                <label for="file-input">📥 Cargar Archivo (.ds)</label>
+
+                <input type="file" id="file-input" accept=".ds,.txt" style="display:none;" onchange="cargarArchivo(event)">
+
+                <button onclick="guardarArchivo()">Exportar (.ds) 💾</button>
+
+            </div>
+
+
+
+            <div id="tab-program" class="tab-content active">
+
+                <div class="editor-wrapper">
+
+                    <pre class="editor-highlight" id="hl-program"></pre>
+
+                    <textarea class="editor-textarea" id="tx-program" spellcheck="false" oninput="updateEditor('program')" onscroll="syncScroll('program')"></textarea>
+
+                    <div class="autocomplete-list" id="autocomplete-program"></div>
+
+                </div>
+
+            </div>
+
+
+
+            <div id="tab-library" class="tab-content">
+
+                <div class="editor-wrapper">
+
+                    <pre class="editor-highlight" id="hl-library"></pre>
+
+                    <textarea class="editor-textarea" id="tx-library" spellcheck="false" oninput="updateEditor('library')" onscroll="syncScroll('library')"></textarea>
+
+                    <div class="autocomplete-list" id="autocomplete-library"></div>
+
+                </div>
+
+            </div>
+
+
+
+            <button id="run-btn" class="action-btn" onclick="runCode()" disabled>Cargando Pyodide...</button>
+
+            <div id="output">Consola de salida...</div>
+
+        </div>
+
+
+
+        <div class="board-section">
+
+            <h3 style="margin: 0; color: #ff9900;">Tablero GUI Web</h3>
+
+            <div id="grid"></div>
+
+
+
+            <div class="controls-bar">
+
+                <button id="pause-btn" onclick="togglePausa()">⏸ Pausa</button>
+
+                <button id="reset-btn" onclick="resetTablero()">🔄 Reset</button>
+
+                <div class="slider-container">
+
+                    <span>Velocidad:</span>
+
+                    <input type="range" id="speed-slider" min="50" max="1000" value="300" step="50" onchange="actualizarVelocidad(this.value)">
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        let pyodide = null;
+
+        let pasotableroQueue = [];
+
+        let animandoTablero = false;
+
+        let enPausa = false;
+
+        let velocidadAnimacion = 300;
+
+        let ultimoEstadoTablero = null;
+
+        let activeTab = 'program';
+
+
+
+        const ESTRELLAS_MAP = {
+
+            "ESFERA_1": "1★", "ESFERA_2": "2★", "ESFERA_3": "3★",
+
+            "ESFERA_4": "4★", "ESFERA_5": "5★", "ESFERA_6": "6★", "ESFERA_7": "7★"
+
+        };
+
+
+
+        const DRAGON_KEYWORDS = [
+
+            "PROGRAMA", "KI", "SCOUTER", "ROSHI", "SENSAR", "ESQUIVAR", "ENTRENAR",
+
+            "RASTREAR", "EN", "GRAVEDAD", "TECNICA", "TRANSMITIR", "FUSION",
+
+            "DESEO", "INVERTIR", "CANON", "RELLENO", "VACIO", "CAPSULA", "ACTIVAR",
+
+            "EVOLUCIONA", "LEGENDARIO", "SI", "SINO", "MIENTRAS", "REPETIR",
+
+            "RETORNAR", "IF", "ELSE", "WHILE", "FOREACH", "GRAVITY", "TECHNIQUE",
+
+            "RETURN", "AND", "OR", "NOT", "TRUE", "FALSE", "NULL", "WARRIOR",
+
+            "CREATE", "EVOLVES", "STATIC", "VOLAR", "CARGAR", "DRENAR",
+
+            "MOSTRAR_TABLERO", "INICIAR_TABLERO", "NUBE_KINTON", "PUEDE_VOLAR",
+
+            "HAY_ESFERA", "CANTIDAD_ESFERAS", "OPUESTO", "IGUAL", "DIFERENTE",
+
+            "VERDADERO", "FALSO", "NORTE", "SUR", "ESTE", "OESTE", "GOKU",
+
+            "KAIOSHIN", "ROSHI", "MOVER", "IR", "PONER", "MOVER_N", "PONER_N",
+
+            "DRENAR_N", "IR_AL_ORIGEN", "ESPERAR"
+
+        ];
+
+
+
+        const AUTOCOMPLETE_STATE = {};
+
+
+
+        function getAutocompleteWordAtCursor(text, cursorPos) {
+
+            let start = cursorPos;
+
+            while (start > 0 && /[A-Za-z_0-9]/.test(text[start - 1])) start--;
+
+            let end = cursorPos;
+
+            while (end < text.length && /[A-Za-z_0-9]/.test(text[end])) end++;
+
+            return { start, end, word: text.slice(start, end) };
+
+        }
+
+
+
+        function getIdentifiersFromText(text) {
+
+            const matches = text.match(/[A-Za-z_][A-Za-z0-9_]*/g) || [];
+
+            const seen = new Set();
+
+            const ids = [];
+
+
+
+            matches.forEach(name => {
+
+                const upper = name.toUpperCase();
+
+                if (!seen.has(name) && !DRAGON_KEYWORDS.some(keyword => keyword.toLowerCase() === name.toLowerCase())) {
+
+                    seen.add(name);
+
+                    ids.push(name);
+
+                }
+
+            });
+
+
+
+            return ids;
+
+        }
+
+
+
+        function getAutocompleteSuggestions(word, text = '') {
+
+            if (!word || word.length < 2) return [];
+
+            const lower = word.toLowerCase();
+
+            const keywordSuggestions = DRAGON_KEYWORDS.filter(item =>
+
+                item.toLowerCase().startsWith(lower) && item.toLowerCase() !== lower
+
+            );
+
+            const customSuggestions = getIdentifiersFromText(text).filter(item =>
+
+                item.toLowerCase().startsWith(lower) && item.toLowerCase() !== lower
+
+            );
+
+            return [...new Set([...keywordSuggestions, ...customSuggestions])].slice(0, 10);
+
+        }
+
+
+
+        function hideAutocomplete(tab) {
+
+            const list = document.getElementById(`autocomplete-${tab}`);
+
+            if (list) {
+
+                list.innerHTML = "";
+
+                list.style.display = 'none';
+
+            }
+
+            AUTOCOMPLETE_STATE[tab] = null;
+
+        }
+
+
+
+        function applyAutocompleteSuggestion(tab, suggestion) {
+
+            const textarea = document.getElementById(`tx-${tab}`);
+
+            const value = textarea.value;
+
+            const cursorPos = textarea.selectionStart;
+
+            const { start, end } = getAutocompleteWordAtCursor(value, cursorPos);
+
+            const nextValue = value.slice(0, start) + suggestion + value.slice(end);
+
+            textarea.value = nextValue;
+
+            textarea.selectionStart = textarea.selectionEnd = start + suggestion.length;
+
+            updateEditor(tab);
+
+            hideAutocomplete(tab);
+
+        }
+
+
+
+        function renderAutocomplete(tab, text, cursorPos) {
+
+            const { start, end, word } = getAutocompleteWordAtCursor(text, cursorPos);
+
+            const suggestions = getAutocompleteSuggestions(word, text);
+
+            const list = document.getElementById(`autocomplete-${tab}`);
+
+
+
+            if (!suggestions.length || !word) {
+
+                hideAutocomplete(tab);
+
+                return;
+
+            }
+
+
+
+            const activeIndex = AUTOCOMPLETE_STATE[tab]?.index ?? 0;
+
+            AUTOCOMPLETE_STATE[tab] = { suggestions, index: Math.min(activeIndex, suggestions.length - 1) };
+
+
+
+            list.innerHTML = suggestions.map((item, index) => `
+
+                <div class="autocomplete-item ${index === AUTOCOMPLETE_STATE[tab].index ? 'active' : ''}" data-value="${item}">${item}</div>
+
+            `).join('');
+
+
+
+            list.style.display = 'block';
+
+
+
+            list.querySelectorAll('.autocomplete-item').forEach(item => {
+
+                item.addEventListener('mousedown', (event) => {
+
+                    event.preventDefault();
+
+                    applyAutocompleteSuggestion(tab, item.dataset.value);
+
+                });
+
+            });
+
+        }
+
+
+
+        function tryAutocomplete(tab) {
+
+            const textarea = document.getElementById(`tx-${tab}`);
+
+            const value = textarea.value;
+
+            const cursorPos = textarea.selectionStart;
+
+            const { word } = getAutocompleteWordAtCursor(value, cursorPos);
+
+            const suggestions = getAutocompleteSuggestions(word, value);
+
+
+
+            if (!suggestions.length) return false;
+
+            applyAutocompleteSuggestion(tab, suggestions[0]);
+
+            return true;
+
+        }
+
+
+
+        function escapeHtml(text) {
+
+            return text
+
+                .replace(/&/g, "&amp;")
+
+                .replace(/</g, "&lt;")
+
+                .replace(/>/g, "&gt;");
+
+        }
+
+
+
+        function highlightSyntax(text) {
+
+            if (!text) return "";
+
+
+
+            const tokenPattern = /(#[^\n]*)|("(?:[^"\\]|\\.)*")|\b(PROGRAMA|KI|SCOUTER|ROSHI|SENSAR|ESQUIVAR|ENTRENAR|RASTREAR|EN|GRAVEDAD|TECNICA|TRANSMITIR|FUSION|DESEO|INVERTIR|CANON|RELLENO|VACIO|CAPSULA|ACTIVAR|EVOLUCIONA|LEGENDARIO|SI|SINO|MIENTRAS|REPETIR|RETORNAR|IF|ELSE|WHILE|FOREACH|GRAVITY|TECHNIQUE|RETURN|AND|OR|NOT|TRUE|FALSE|NULL|WARRIOR|CREATE|EVOLVES|STATIC|VOLAR|CARGAR|DRENAR|MOSTRAR_TABLERO|INICIAR_TABLERO|NUBE_KINTON|PUEDE_VOLAR|HAY_ESFERA|CANTIDAD_ESFERAS|OPUESTO|IGUAL|DIFERENTE|VERDADERO|FALSO|NORTE|SUR|ESTE|OESTE|GOKU|KAIOSHIN)\b|\b(ESFERA_[1-7])\b|\b(\d+)\b|([A-Za-z_][A-Za-z0-9_]*)|([(){}\[\],.;:=+\-*/%<>!&|?])/g;
+
+
+
+            let result = "";
+
+            let lastIndex = 0;
+
+
+
+            text.replace(tokenPattern, (match, ...args) => {
+
+                const offset = args[args.length - 2];
+
+                const comment = args[0];
+
+                const stringToken = args[1];
+
+                const keyword = args[2];
+
+                const routine = args[3];
+
+                const command = args[4];
+
+                const constant = args[5];
+
+                const number = args[6];
+
+                const identifier = args[7];
+
+                const operator = args[8];
+
+
+
+                const plainBefore = text.slice(lastIndex, offset);
+
+                result += escapeHtml(plainBefore);
+
+
+
+                let token = match;
+
+                if (comment) token = `<span class="hl-comment">${escapeHtml(comment)}</span>`;
+
+                else if (stringToken) token = `<span class="hl-string">${escapeHtml(stringToken)}</span>`;
+
+                else if (keyword) token = `<span class="hl-keyword">${escapeHtml(keyword)}</span>`;
+
+                else if (routine) token = `<span class="hl-routine">${escapeHtml(routine)}</span>`;
+
+                else if (command) token = `<span class="hl-command">${escapeHtml(command)}</span>`;
+
+                else if (constant) token = `<span class="hl-constant">${escapeHtml(constant)}</span>`;
+
+                else if (number) token = `<span class="hl-number">${escapeHtml(number)}</span>`;
+
+                else if (identifier) token = `<span class="hl-identifier">${escapeHtml(identifier)}</span>`;
+
+                else if (operator) token = `<span class="hl-operator">${escapeHtml(operator)}</span>`;
+
+                else token = escapeHtml(match);
+
+
+
+                result += token;
+
+                lastIndex = offset + match.length;
+
+                return match;
+
+            });
+
+
+
+            if (lastIndex < text.length) {
+
+                result += escapeHtml(text.slice(lastIndex));
+
+            }
+
+
+
+            if (text.endsWith('\n')) result += ' ';
+
+            return result;
+
+        }
+
+
+
+        function updateEditor(tab) {
+
+            const tx = document.getElementById(`tx-${tab}`);
+
+            const hl = document.getElementById(`hl-${tab}`);
+
+            hl.innerHTML = highlightSyntax(tx.value);
+
+            localStorage.setItem(`ds_${tab}`, tx.value);
+
+        }
+
+
+
+        function syncScroll(tab) {
+
+            const tx = document.getElementById(`tx-${tab}`);
+
+            const hl = document.getElementById(`hl-${tab}`);
+
+            hl.scrollTop = tx.scrollTop;
+
+            hl.scrollLeft = tx.scrollLeft;
+
+        }
+
+
+
+        function attachAutocomplete(tab) {
+
+            const textarea = document.getElementById(`tx-${tab}`);
+
+
+
+            textarea.addEventListener('input', () => {
+
+                const value = textarea.value;
+
+                const cursorPos = textarea.selectionStart;
+
+                renderAutocomplete(tab, value, cursorPos);
+
+                updateEditor(tab);
+
+            });
+
+
+
+            textarea.addEventListener('keydown', (event) => {
+
+                const state = AUTOCOMPLETE_STATE[tab];
+
+
+
+                if (event.key === 'ArrowDown' && state && state.suggestions.length) {
+
+                    event.preventDefault();
+
+                    state.index = (state.index + 1) % state.suggestions.length;
+
+                    const list = document.getElementById(`autocomplete-${tab}`);
+
+                    list.querySelectorAll('.autocomplete-item').forEach((item, index) => {
+
+                        item.classList.toggle('active', index === state.index);
+
+                    });
+
+                    return;
+
+                }
+
+
+
+                if (event.key === 'ArrowUp' && state && state.suggestions.length) {
+
+                    event.preventDefault();
+
+                    state.index = (state.index - 1 + state.suggestions.length) % state.suggestions.length;
+
+                    const list = document.getElementById(`autocomplete-${tab}`);
+
+                    list.querySelectorAll('.autocomplete-item').forEach((item, index) => {
+
+                        item.classList.toggle('active', index === state.index);
+
+                    });
+
+                    return;
+
+                }
+
+
+
+                if ((event.key === 'Tab' || event.key === 'Enter') && state && state.suggestions.length) {
+
+                    event.preventDefault();
+
+                    applyAutocompleteSuggestion(tab, state.suggestions[state.index]);
+
+                    return;
+
+                }
+
+
+
+                if (event.key === 'Escape') {
+
+                    hideAutocomplete(tab);
+
+                }
+
+            });
+
+
+
+            textarea.addEventListener('blur', () => {
+
+                setTimeout(() => hideAutocomplete(tab), 100);
+
+            });
+
+        }
+
+
+
+        function switchTab(tabName) {
+
+            activeTab = tabName;
+
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+
+
+            if (tabName === 'program') {
+
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+
+                document.getElementById('tab-program').classList.add('active');
+
+            } else {
+
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+
+                document.getElementById('tab-library').classList.add('active');
+
+            }
+
+        }
+
+
+
+        function initEditors() {
+
+            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(4, 4)\n\n# Programa principal\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
+
+            const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca de Funciones\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
+
+
+
+            document.getElementById("tx-program").value = defaultProgram;
+
+            document.getElementById("tx-library").value = defaultLibrary;
+
+
+
+            attachAutocomplete('program');
+
+            attachAutocomplete('library');
+
+            updateEditor('program');
+
+            updateEditor('library');
+
+        }
+
+
+
+        function cargarArchivo(e) {
+
+            const file = e.target.files[0];
+
+            if (!file) return;
+
+
+
+            const reader = new FileReader();
+
+            reader.onload = function(evt) {
+
+                const tx = document.getElementById(`tx-${activeTab}`);
+
+                tx.value = evt.target.result;
+
+                updateEditor(activeTab);
+
+            };
+
+            reader.readAsText(file);
+
+            e.target.value = '';
+
+        }
+
+
+
+        function guardarArchivo() {
+
+            const tx = document.getElementById(`tx-${activeTab}`);
+
+            const content = tx.value;
+
+            const fileName = activeTab === 'program' ? 'programa.ds' : 'biblioteca.ds';
+
+           
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+
+            const a = document.createElement('a');
+
+            a.href = URL.createObjectURL(blob);
+
+            a.download = fileName;
+
+            a.click();
+
+        }
+
+
+
+        window.actualizarTableroJS = function(ancho, alto, posX, posY, celdasJson) {
+
+            ultimoEstadoTablero = { ancho, alto, posX, posY, celdasJson };
+
+            pasotableroQueue.push(ultimoEstadoTablero);
+
+            if (!animandoTablero) procesarColaAnimacion();
+
+        };
+
+
+
+        function togglePausa() {
+
+            enPausa = !enPausa;
+
+            document.getElementById("pause-btn").innerText = enPausa ? "▶ Reanudar" : "⏸ Pausa";
+
+            if (!enPausa && pasotableroQueue.length > 0) procesarColaAnimacion();
+
+        }
+
+
+
+        function resetTablero() {
+
+            pasotableroQueue = [];
+
+            animandoTablero = false;
+
+            enPausa = false;
+
+            document.getElementById("pause-btn").innerText = "⏸ Pausa";
+
+            if (ultimoEstadoTablero) {
+
+                renderizarFrameTablero(ultimoEstadoTablero.ancho, ultimoEstadoTablero.alto, 0, 0, "{}");
+
+            }
+
+        }
+
+
+
+        function actualizarVelocidad(val) { velocidadAnimacion = 1050 - parseInt(val); }
+
+
+
+        function procesarColaAnimacion() {
+
+            if (enPausa) return;
+
+            if (pasotableroQueue.length === 0) {
+
+                animandoTablero = false;
+
+                return;
+
+            }
+
+            animandoTablero = true;
+
+            const estado = pasotableroQueue.shift();
+
+            renderizarFrameTablero(estado.ancho, estado.alto, estado.posX, estado.posY, estado.celdasJson);
+
+            setTimeout(procesarColaAnimacion, velocidadAnimacion);
+
+        }
+
+
+
+        function renderizarFrameTablero(ancho, alto, posX, posY, celdasJson) {
+
+            const grid = document.getElementById("grid");
+
+            if (!grid) return;
+
+
+
+            grid.style.gridTemplateColumns = `repeat(${ancho}, 1fr)`;
+
+            grid.innerHTML = "";
+
+
+
+            let celdas = {};
+
+            try { celdas = JSON.parse(celdasJson); } catch (e) {}
+
+
+
+            for (let r = alto - 1; r >= 0; r--) {
+
+                for (let c = 0; c < ancho; c++) {
+
+                    const cell = document.createElement("div");
+
+                    cell.className = "cell";
+
+
+
+                    const coord = document.createElement("span");
+
+                    coord.className = "cell-coord";
+
+                    coord.innerText = `(${c},${r})`;
+
+                    cell.appendChild(coord);
+
+
+
+                    if (c === posX && r === posY) {
+
+                        cell.classList.add("guerrero-cell");
+
+                        // Goku pixel art (cabezal)
+                        const goku = document.createElement("div");
+                        goku.className = "goku-pixel aura";
+                        goku.title = "Goku";
+                        const px = document.createElement("div");
+                        px.className = "px";
+                        // 7x9 pixel map: 0 vacío, h hair, s skin, e eye, g gi naranja, b blue, r red belt, o boot
+                        const map = [
+                            "0hh0hh0",
+                            "hhhhhhh",
+                            "0hsssh0",
+                            "0seses0",
+                            "0sssss0",
+                            "0ggggg0",
+                            "0gbrbg0",
+                            "0b0b0b0",
+                            "0o0o0o0"
+                        ];
+                        const cls = {h:"hair",s:"skin",e:"eye",g:"gi",b:"gi2",r:"belt",o:"boot"};
+                        for (const row of map) {
+                            for (const ch of row) {
+                                const d = document.createElement("div");
+                                d.className = "p" + (cls[ch] ? " " + cls[ch] : "");
+                                px.appendChild(d);
+                            }
+                        }
+                        goku.appendChild(px);
+                        cell.appendChild(goku);
+
+                        const tag = document.createElement("span");
+                        tag.className = "guerrero-tag";
+                        tag.innerText = "GOKU";
+                        cell.appendChild(tag);
+
+                    }
+
+
+
+                    const key = `(${c}, ${r})`;
+
+                    const esferasEnCelda = celdas[key] || {};
+
+
+
+                    for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
+
+                        if (cantidad > 0) {
+
+                            const orb = document.createElement("div");
+
+                            orb.className = "esfera-orb";
+
+                            const estrellas = ESTRELLAS_MAP[esfera] || esfera;
+
+                            orb.innerText = cantidad > 1 ? `${cantidad}x${estrellas}` : estrellas;
+
+                            cell.appendChild(orb);
+
+                        }
+
+                    }
+
+
+
+                    grid.appendChild(cell);
+
+                }
+
+            }
+
+        }
+
+
+
+        async function init() {
+
+            initEditors();
+
+            const status = document.getElementById("status");
+
+            const btn = document.getElementById("run-btn");
+
+            const output = document.getElementById("output");
+
+
+
+            try {
+
+                status.innerText = "⏳ Cargando Pyodide...";
+
+                pyodide = await loadPyodide();
+
+
+
+                pyodide.setStdout({
+
+                    batched: (text) => { output.innerText += text + "\n"; }
+
+                });
+
+
+
+                status.innerText = "⏳ Preparando motor DragonScript...";
+
+               
+
+                pyodide.FS.mkdir('/target');
+
+                pyodide.FS.mkdir('/target/dragonscript');
+
+               
+
+                if (window.DRAGONSCRIPT_FILES) {
+
+                    for (const [filename, content] of Object.entries(window.DRAGONSCRIPT_FILES)) {
+
+                        pyodide.FS.writeFile(`/target/dragonscript/${filename}`, content);
+
+                    }
+
+                }
+
+
+
+                await pyodide.runPythonAsync(`
+
+import sys
+
+sys.path.append('/target')
+
+from dragonscript.lexer import Lexer
+
+from dragonscript.parser import Parser
+
+from dragonscript.interpreter import Interpreter
+
+
+
+def execute_dragonscript(user_code, lib_code):
+
+    full_code = lib_code + "\\n" + user_code
+
+    tokens = Lexer(full_code).tokenize()
+
+    ast = Parser(tokens).parse()
+
+    Interpreter().interpret(ast)
+
+`);
+
+
+
+                status.innerText = "⚡ Entorno listo";
+
+                status.style.color = "#50fa7b";
+
+                btn.innerText = "Ejecutar Código ⚡";
+
+                btn.disabled = false;
+
+            } catch (err) {
+
+                status.innerText = "❌ Error al cargar: " + err.message;
+
+                status.style.color = "#ff5555";
+
+                output.innerText = err.stack || err.message;
+
+            }
+
+        }
+
+
+
+        async function runCode() {
+
+            const code = document.getElementById("tx-program").value;
+
+            const libCode = document.getElementById("tx-library").value;
+
+            const output = document.getElementById("output");
+
+            const btn = document.getElementById("run-btn");
+
+            output.innerText = "";
+
+
+
+            pasotableroQueue = [];
+
+            animandoTablero = false;
+
+            enPausa = false;
+
+            document.getElementById("pause-btn").innerText = "⏸ Pausa";
+
+
+
+            btn.disabled = true;
+
+            btn.innerText = "Ejecutando...";
+
+
+
+            try {
+
+                pyodide.globals.set("user_code", code);
+
+                pyodide.globals.set("lib_code", libCode);
+
+                await pyodide.runPythonAsync(`execute_dragonscript(user_code, lib_code)`);
+
+            } catch (err) {
+
+                output.innerText += "\nError de ejecucion: " + err.message;
+
+            } finally {
+
+                btn.disabled = false;
+
+                btn.innerText = "Ejecutar Código ⚡";
+
+            }
+
+        }
+
+
+
+        window.addEventListener("DOMContentLoaded", init);
+
+    </script>
+
+</body>
+
+</html>  
+
