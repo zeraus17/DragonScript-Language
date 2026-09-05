@@ -425,29 +425,29 @@
             user-select: none;
             z-index: 2;
         }
-        .esfera-orb.slot-1 { top: 16%; left: 12%; }
-        .esfera-orb.slot-2 { top: 16%; right: 12%; }
-        .esfera-orb.slot-3 { bottom: 16%; left: 12%; }
-        .esfera-orb.slot-4 { bottom: 16%; right: 12%; }
+        .esfera-orb.slot-1 { top: 10%; left: 8%; }
+        .esfera-orb.slot-2 { top: 10%; right: 8%; }
+        .esfera-orb.slot-3 { bottom: 10%; left: 8%; }
+        .esfera-orb.slot-4 { bottom: 10%; right: 8%; }
         /* Tipos 5-7 (si aparecen): centro / centro-izq / centro-der */
         .esfera-orb.slot-5 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
         .esfera-orb.slot-6 { top: 50%; left: 12%; transform: translateY(-50%); }
         .esfera-orb.slot-7 { top: 50%; right: 12%; transform: translateY(-50%); }
 
-        /* Goku: token fijo abajo-centro, no empuja nada */
+        /* Goku: centro de la celda (hueco entre las 4 esferas) */
         .goku-sprite {
             position: absolute;
             left: 50%;
-            bottom: 4%;
-            transform: translateX(-50%);
-            height: 42%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            height: 48%;
             width: auto;
-            max-height: 40px;
+            max-height: 44px;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
             pointer-events: none;
             z-index: 3;
-            filter: drop-shadow(0 0 3px rgba(80, 250, 123, 0.7));
+            filter: drop-shadow(0 0 4px rgba(80, 250, 123, 0.75));
         }
 
 
