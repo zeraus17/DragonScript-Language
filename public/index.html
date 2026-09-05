@@ -362,33 +362,93 @@
 
         /* GUI Tablero */
 
-        #grid { display: grid; gap: 2px; background: #1a1b26; padding: 6px; border-radius: 6px; width: 100%; max-width: 360px; aspect-ratio: 1; border: 1px solid #333; }
+        #grid { display: grid; gap: 3px; background: #1a1b26; padding: 8px; border-radius: 6px; width: 100%; max-width: 420px; min-height: 320px; aspect-ratio: 1; border: 1px solid #333; }
 
-        .cell { background: #282a36; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 2px; position: relative; display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 4px; padding: 2px; overflow: hidden; }
+        /* Celdas de tamaño fijo: el contenido NO reacomoda el layout */
+        .cell {
+            background: #282a36;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            /* el tamaño lo define el grid (aspect-ratio), no el contenido */
+        }
 
-        .cell-coord { position: absolute; top: 2px; left: 2px; font-size: 8px; color: #555; pointer-events: none; }
+        .cell-coord {
+            position: absolute;
+            top: 2px;
+            left: 3px;
+            font-size: 8px;
+            color: #555;
+            pointer-events: none;
+            z-index: 5;
+        }
 
-        .guerrero-cell { border: 2px solid #50fa7b !important; background-color: #21332a !important; }
+        .guerrero-cell {
+            border: 2px solid #50fa7b !important;
+            background: #1e2c24 !important;
+            box-shadow: inset 0 0 12px rgba(80, 250, 123, 0.12);
+        }
 
-        .guerrero-tag { position: absolute; top: 2px; right: 2px; font-size: 8px; color: #50fa7b; font-weight: bold; z-index: 3; }
+        .guerrero-tag {
+            position: absolute;
+            top: 2px;
+            right: 3px;
+            font-size: 8px;
+            color: #50fa7b;
+            font-weight: bold;
+            z-index: 5;
+            text-shadow: 0 0 4px rgba(0,0,0,0.85);
+        }
 
-        /* Goku sprite real (imagen pixel art) */
+        /*
+         * Esferas en ranuras fijas (estilo Gobstones):
+         *   1★  arriba-izq     2★  arriba-der
+         *   3★  abajo-izq      4★  abajo-der
+         * Así agregar/sacar esferas nunca mueve el resto.
+         */
+        .esfera-orb {
+            position: absolute;
+            width: 26%;
+            max-width: 28px;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #ffcc00, #ff6600);
+            box-shadow: 0 0 5px rgba(255, 102, 0, 0.7), inset -2px -2px 3px rgba(0,0,0,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7a0000;
+            font-weight: bold;
+            font-size: clamp(8px, 1.6vw, 11px);
+            border: 1px solid #ffaa00;
+            user-select: none;
+            z-index: 2;
+        }
+        .esfera-orb.slot-1 { top: 16%; left: 12%; }
+        .esfera-orb.slot-2 { top: 16%; right: 12%; }
+        .esfera-orb.slot-3 { bottom: 16%; left: 12%; }
+        .esfera-orb.slot-4 { bottom: 16%; right: 12%; }
+        /* Tipos 5-7 (si aparecen): centro / centro-izq / centro-der */
+        .esfera-orb.slot-5 { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .esfera-orb.slot-6 { top: 50%; left: 12%; transform: translateY(-50%); }
+        .esfera-orb.slot-7 { top: 50%; right: 12%; transform: translateY(-50%); }
+
+        /* Goku: token fijo abajo-centro, no empuja nada */
         .goku-sprite {
             position: absolute;
             left: 50%;
-            top: 54%;
-            transform: translate(-50%, -50%);
+            bottom: 4%;
+            transform: translateX(-50%);
+            height: 42%;
             width: auto;
-            height: 68%;
-            max-height: 56px;
+            max-height: 40px;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
-            z-index: 2;
             pointer-events: none;
-            filter: drop-shadow(0 0 4px rgba(80, 250, 123, 0.7));
+            z-index: 3;
+            filter: drop-shadow(0 0 3px rgba(80, 250, 123, 0.7));
         }
-
-        .esfera-orb { width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffcc00, #ff6600); box-shadow: 0 0 6px rgba(255, 102, 0, 0.8), inset -2px -2px 4px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: #8b0000; font-weight: bold; font-size: 10px; border: 1px solid #ffaa00; user-select: none; z-index: 1; }
 
 
 
@@ -1218,11 +1278,30 @@
 
 
 
+                    const key = `(${c}, ${r})`;
+                    const esferasEnCelda = celdas[key] || {};
+
+                    // Esferas en ranuras fijas por tipo (no reflow)
+                    for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
+                        if (cantidad <= 0) continue;
+                        const orb = document.createElement("div");
+                        // ESFERA_1 -> slot-1, etc.
+                        const num = String(esfera).replace(/\D/g, "") || "1";
+                        orb.className = "esfera-orb slot-" + num;
+                        const estrellas = ESTRELLAS_MAP[esfera] || esfera;
+                        orb.innerText = cantidad > 1 ? (cantidad + "x") : estrellas;
+                        orb.title = estrellas + (cantidad > 1 ? (" x" + cantidad) : "");
+                        cell.appendChild(orb);
+                    }
+
+                    // Goku: token fijo (absolute), no cambia el tamaño de la celda
                     if (c === posX && r === posY) {
-
                         cell.classList.add("guerrero-cell");
+                        const tag = document.createElement("span");
+                        tag.className = "guerrero-tag";
+                        tag.innerText = "GOKU";
+                        cell.appendChild(tag);
 
-                        // Goku sprite real (pixel art del video)
                         const goku = document.createElement("img");
                         goku.src = "goku.png";
                         goku.alt = "Goku";
@@ -1230,41 +1309,7 @@
                         goku.className = "goku-sprite";
                         goku.draggable = false;
                         cell.appendChild(goku);
-
-                        const tag = document.createElement("span");
-                        tag.className = "guerrero-tag";
-                        tag.innerText = "GOKU";
-                        cell.appendChild(tag);
-
                     }
-
-
-
-                    const key = `(${c}, ${r})`;
-
-                    const esferasEnCelda = celdas[key] || {};
-
-
-
-                    for (const [esfera, cantidad] of Object.entries(esferasEnCelda)) {
-
-                        if (cantidad > 0) {
-
-                            const orb = document.createElement("div");
-
-                            orb.className = "esfera-orb";
-
-                            const estrellas = ESTRELLAS_MAP[esfera] || esfera;
-
-                            orb.innerText = cantidad > 1 ? `${cantidad}x${estrellas}` : estrellas;
-
-                            cell.appendChild(orb);
-
-                        }
-
-                    }
-
-
 
                     grid.appendChild(cell);
 
