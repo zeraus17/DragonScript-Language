@@ -37,6 +37,26 @@ class TestParser(unittest.TestCase):
         self.assertIsInstance(expr.right, ast.BinaryOp)
         self.assertEqual(expr.right.operator, "*")
 
+    def test_expression_can_continue_after_line_breaking_operator(self):
+        prog = build(
+            "KI total = 1 +\n"
+            "    2 +\n"
+            "    3 +\n"
+            "    4"
+        )
+        expr = prog.statements[0].value
+        self.assertIsInstance(expr, ast.BinaryOp)
+        self.assertEqual(expr.operator, "+")
+
+    def test_parenthesized_expression_allows_line_breaks(self):
+        prog = build(
+            "KI total = (\n"
+            "    1 + 2 +\n"
+            "    3 + 4\n"
+            ")"
+        )
+        self.assertIsInstance(prog.statements[0].value, ast.BinaryOp)
+
     def test_comparison_precedence(self):
         # 1 + 2 > 3 => (1 + 2) > 3
         prog = build("KI x = 1 + 2 > 3")

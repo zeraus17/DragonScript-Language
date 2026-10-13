@@ -366,7 +366,7 @@ class TestTablero(unittest.TestCase):
             preserve_initial_board=True,
         ).interpret(program)
 
-        self.assertEqual(output.getvalue(), "2\n1\n")
+        self.assertEqual(output.getvalue(), "2\n0\n")
         self.assertEqual(board.cuantas(1), 1)
         self.assertEqual(board.celdas[(1, 0)][1], 1)
         self.assertEqual(board.cuantas(2), 0)

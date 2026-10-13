@@ -12,6 +12,7 @@ from dragonscript.board import Board
 from dragonscript.errors import (UndefinedVariableError, DivisionByZeroError,
                                  StackOverflowError_, ArgumentError, TypeErrorDS,
                                  RuntimeError_)
+from dragonscript.interpreter import Interpreter
 from dragonscript.lexer import tokenize
 from dragonscript.parser import parse
 

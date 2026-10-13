@@ -58,6 +58,21 @@ class Parser:
     while self._check(TokenType.NEWLINE):
       self._advance()
 
+  def _match_binary_operator(
+      self, operators: dict[TokenType, str]
+  ) -> tuple[Token, str] | None:
+    offset = 0
+    while self._peek(offset).type == TokenType.NEWLINE:
+      offset += 1
+    operator = self._peek(offset)
+    if operator.type not in operators:
+      return None
+    for _ in range(offset):
+      self._advance()
+    operator = self._advance()
+    self._skip_newlines()
+    return operator, operators[operator.type]
+
   # ------------------------------------------------------------------ main
   def parse(self) -> ast.Program:
     program = ast.Program(line=1)
@@ -407,27 +422,41 @@ class Parser:
 
   def _logic_or(self) -> ast.Node:
     left = self._logic_and()
-    while self._check(TokenType.OR):
-      line = self._advance().line
+    operators = {TokenType.OR: "OR"}
+    matched = self._match_binary_operator(operators)
+    while matched is not None:
+      operator, op = matched
       right = self._logic_and()
-      left = ast.BinaryOp(left=left, operator="OR", right=right, line=line)
+      left = ast.BinaryOp(
+          left=left, operator=op, right=right, line=operator.line
+      )
+      matched = self._match_binary_operator(operators)
     return left
 
   def _logic_and(self) -> ast.Node:
     left = self._equality()
-    while self._check(TokenType.AND):
-      line = self._advance().line
+    operators = {TokenType.AND: "AND"}
+    matched = self._match_binary_operator(operators)
+    while matched is not None:
+      operator, op = matched
       right = self._equality()
-      left = ast.BinaryOp(left=left, operator="AND", right=right, line=line)
+      left = ast.BinaryOp(
+          left=left, operator=op, right=right, line=operator.line
+      )
+      matched = self._match_binary_operator(operators)
     return left
 
   def _equality(self) -> ast.Node:
     left = self._comparison()
-    while self._current().type in (TokenType.EQ, TokenType.NEQ):
-      op = "==" if self._current().type == TokenType.EQ else "!="
-      line = self._advance().line
+    operators = {TokenType.EQ: "==", TokenType.NEQ: "!="}
+    matched = self._match_binary_operator(operators)
+    while matched is not None:
+      operator, op = matched
       right = self._comparison()
-      left = ast.BinaryOp(left=left, operator=op, right=right, line=line)
+      left = ast.BinaryOp(
+          left=left, operator=op, right=right, line=operator.line
+      )
+      matched = self._match_binary_operator(operators)
     return left
 
   def _comparison(self) -> ast.Node:
@@ -438,31 +467,40 @@ class Parser:
         TokenType.LTE: "<=",
         TokenType.GTE: ">=",
     }
-    while self._current().type in ops:
-      op = ops[self._current().type]
-      line = self._advance().line
+    matched = self._match_binary_operator(ops)
+    while matched is not None:
+      operator, op = matched
       right = self._term()
-      left = ast.BinaryOp(left=left, operator=op, right=right, line=line)
+      left = ast.BinaryOp(
+          left=left, operator=op, right=right, line=operator.line
+      )
+      matched = self._match_binary_operator(ops)
     return left
 
   def _term(self) -> ast.Node:
     left = self._factor()
     ops = {TokenType.PLUS: "+", TokenType.MINUS: "-"}
-    while self._current().type in ops:
-      op = ops[self._current().type]
-      line = self._advance().line
+    matched = self._match_binary_operator(ops)
+    while matched is not None:
+      operator, op = matched
       right = self._factor()
-      left = ast.BinaryOp(left=left, operator=op, right=right, line=line)
+      left = ast.BinaryOp(
+          left=left, operator=op, right=right, line=operator.line
+      )
+      matched = self._match_binary_operator(ops)
     return left
 
   def _factor(self) -> ast.Node:
     left = self._unary()
     ops = {TokenType.STAR: "*", TokenType.SLASH: "/", TokenType.PERCENT: "%"}
-    while self._current().type in ops:
-      op = ops[self._current().type]
-      line = self._advance().line
+    matched = self._match_binary_operator(ops)
+    while matched is not None:
+      operator, op = matched
       right = self._unary()
-      left = ast.BinaryOp(left=left, operator=op, right=right, line=line)
+      left = ast.BinaryOp(
+          left=left, operator=op, right=right, line=operator.line
+      )
+      matched = self._match_binary_operator(ops)
     return left
 
   def _unary(self) -> ast.Node:
@@ -539,7 +577,9 @@ class Parser:
       return self._create_expression()
     if tok.type == TokenType.LPAREN:
       self._advance()
+      self._skip_newlines()
       expr = self._expression()
+      self._skip_newlines()
       self._expect(
           TokenType.RPAREN, "Se esperaba ')' para cerrar la expresión"
       )
