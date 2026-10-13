@@ -217,7 +217,7 @@ class Parser:
     self._skip_newlines()  
     body = self._block()
     return ast.TechniqueDeclaration(
-        name=name, params=params, body=body, line=line
+        name=name, params=params, line=line, body=body
     )
 
   def _roshi_declaration(self) -> ast.TechniqueDeclaration:
@@ -251,7 +251,7 @@ class Parser:
         raise ParserError("¡Un entrenamiento de ROSHI no debe TRANSMITIR ningún valor!", stmt.line)
 
     return ast.TechniqueDeclaration(
-        name=name, params=params, body=body, line=line
+        name=name, params=params, body=body, is_procedure=True, line=line
     )
 
   def _import_statement(self) -> ast.ImportStatement:

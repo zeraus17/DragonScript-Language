@@ -3,12 +3,17 @@
 import os
 import sys
 import unittest
+from io import StringIO
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from dragonscript import run_source_capture
+from dragonscript.board import Board
 from dragonscript.errors import (UndefinedVariableError, DivisionByZeroError,
-                                 StackOverflowError_, ArgumentError, TypeErrorDS)
+                                 StackOverflowError_, ArgumentError, TypeErrorDS,
+                                 RuntimeError_)
+from dragonscript.lexer import tokenize
+from dragonscript.parser import parse
 
 
 class TestInterpreter(unittest.TestCase):
@@ -101,6 +106,44 @@ TECHNIQUE entrenar(g, c) {
 SCOUTER entrenar(1000, 500)
 """
         self.assertEqual(self.run_code(code), "1500\n")
+
+    def test_standalone_function_call_displays_return_value(self):
+        code = """
+TECHNIQUE doble(n) { TRANSMITIR n * 2 }
+doble(21)
+"""
+        self.assertEqual(self.run_code(code), "42\n")
+
+    def test_function_cannot_change_board(self):
+        code = """
+INICIAR_TABLERO(2, 2)
+TECHNIQUE sembrar() { CARGAR(ESFERA_1) }
+sembrar()
+"""
+        with self.assertRaisesRegex(RuntimeError_, "no puede realizar acciones"):
+            self.run_code(code)
+
+    def test_function_can_move_temporarily_to_inspect_board(self):
+        board = Board(2, 1)
+        board.cargar(1)
+        board.volar("ESTE")
+        board.cargar(3)
+        board.volar("OESTE")
+        output = StringIO()
+        program = parse(tokenize(
+            "TECNICA consultar() {\n"
+            "  VOLAR(ESTE)\n"
+            "  TRANSMITIR CANTIDAD_ESFERAS(ESFERA_3)\n"
+            "}\n"
+            "SCOUTER consultar()\n"
+            "SCOUTER POSICION_X()"
+        ))
+
+        Interpreter(output=output, board=board).interpret(program)
+
+        self.assertEqual(output.getvalue(), "1\n0\n")
+        self.assertEqual(board.cuantas(1), 1)
+        self.assertEqual(board.x, 0)
 
     def test_recursion_factorial(self):
         code = """

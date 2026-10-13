@@ -168,6 +168,11 @@ RASTREAR n EN [1..10] {
 
 ### Funciones (`TECNICA` / `TRANSMITIR`)
 
+Las funciones calculan y devuelven valores; no pueden modificar el tablero.
+Para mover el cabezal o poner y sacar esferas, usa un procedimiento `ROSHI`.
+Si se invoca una función como sentencia, su valor de retorno se muestra en la
+consola.
+
 ```dragonscript
 TECNICA factorial(n) {
     SENSAR n <= 1 {
@@ -279,6 +284,13 @@ se mueve por las celdas y guarda **esferas del dragón** (cuatro tipos).
 El origen `(0,0)` está abajo a la izquierda: `NORTE` sube, `SUR` baja,
 `ESTE` va a la derecha y `OESTE` a la izquierda.
 
+En el playground web se puede mover el cabezal o agregar/quitar esferas
+haciendo clic en las celdas antes de ejecutar. Ese estado inicial se conserva
+al ejecutar. La primera llamada a `INICIAR_TABLERO` conserva las esferas dentro
+del tamaño solicitado; una inicialización posterior reinicia el tablero. Las
+funciones pueden mover temporalmente el cabezal para consultar otras celdas,
+pero al devolver el resultado la posición original se restaura.
+
 | Comando | Descripción |
 |---------|-------------|
 | `INICIAR_TABLERO(ancho, alto)` | Crea un tablero y para el cabezal en (0,0) |
@@ -288,7 +300,8 @@ El origen `(0,0)` está abajo a la izquierda: `NORTE` sube, `SUR` baja,
 | `VOLAR(dir)` | Mueve el cabezal una celda |
 | `PUEDE_VOLAR(dir)` | ¿Se puede mover sin salir del borde? |
 | `CARGAR(esfera)` / `DRENAR(esfera)` | Pone / saca una esfera en la celda actual |
-| `HAY(esfera)` / `CUANTAS(esfera)` | ¿Hay? / ¿cuántas? en la celda actual |
+| `HAY(esfera)` / `HAY_ESFERA(esfera)` | ¿Hay una esfera en la celda actual? |
+| `CUANTAS(esfera)` / `CANTIDAD_ESFERAS(esfera)` | Cantidad en la celda actual |
 | `POSICION_X()` / `POSICION_Y()` | Columna / fila del cabezal |
 | `MOSTRAR_TABLERO()` | Dibuja el tablero en pantalla |
 

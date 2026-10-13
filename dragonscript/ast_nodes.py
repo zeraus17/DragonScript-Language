@@ -195,6 +195,7 @@ class TechniqueDeclaration(Node):
     params: list[str] = field(default_factory=list)
     body: Block = field(default_factory=Block)
     is_static: bool = False
+    is_procedure: bool = False
     line: int = 0
 
 

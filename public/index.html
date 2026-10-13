@@ -163,17 +163,34 @@
             line-height: 1.5;
 
             white-space: pre-wrap;
-
             word-wrap: break-word;
-
             word-break: break-word;
-
             tab-size: 4;
-
             box-sizing: border-box;
 
             overflow: auto;
+        }
 
+        .editor-textarea, .editor-highlight { padding-left: 56px; }
+
+        .editor-gutter {
+            position: absolute;
+            z-index: 3;
+            top: 0;
+            left: 0;
+            width: 44px;
+            height: 100%;
+            margin: 0;
+            padding: 12px 7px 12px 0;
+            overflow: hidden;
+            background: #1e1e1e;
+            border-right: 1px solid #333;
+            color: #858585;
+            font: 14px/1.5 'Consolas', 'Courier New', monospace;
+            text-align: right;
+            white-space: pre;
+            pointer-events: none;
+            user-select: none;
         }
 
 
@@ -363,6 +380,8 @@
         /* GUI Tablero */
 
         #grid { display: grid; gap: 3px; background: #1a1b26; padding: 8px; border-radius: 6px; width: 100%; max-width: 420px; min-height: 320px; aspect-ratio: 1; border: 1px solid #333; }
+        #grid .cell { cursor: pointer; }
+        #grid .cell:hover { outline: 1px solid rgba(255, 153, 0, 0.7); }
 
         /* Celdas de tamaño fijo: el contenido NO reacomoda el layout */
         .cell {
@@ -459,6 +478,8 @@
         .slider-container { display: flex; align-items: center; gap: 6px; flex: 1; font-size: 12px; color: #ccc; }
 
         .slider-container input { flex: 1; }
+        .board-edit-controls { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; width: 100%; color: #ccc; font-size: 12px; }
+        .board-edit-controls select { background: #222; color: #fff; border: 1px solid #555; border-radius: 4px; padding: 5px; }
 
     </style>
 
@@ -504,6 +525,8 @@
 
                 <div class="editor-wrapper">
 
+                    <pre class="editor-gutter" id="gutter-program" aria-hidden="true"></pre>
+
                     <pre class="editor-highlight" id="hl-program"></pre>
 
                     <textarea class="editor-textarea" id="tx-program" spellcheck="false" oninput="updateEditor('program')" onscroll="syncScroll('program')"></textarea>
@@ -519,6 +542,8 @@
             <div id="tab-library" class="tab-content">
 
                 <div class="editor-wrapper">
+
+                    <pre class="editor-gutter" id="gutter-library" aria-hidden="true"></pre>
 
                     <pre class="editor-highlight" id="hl-library"></pre>
 
@@ -545,6 +570,23 @@
             <h3 style="margin: 0; color: #ff9900;">Tablero GUI Web</h3>
 
             <div id="grid"></div>
+
+            <div class="board-edit-controls">
+                <label for="board-edit-mode">Al hacer clic:</label>
+                <select id="board-edit-mode">
+                    <option value="head">Mover cabezal</option>
+                    <option value="add">Agregar esfera</option>
+                    <option value="remove">Quitar esfera</option>
+                </select>
+                <label for="board-edit-sphere">Esfera:</label>
+                <select id="board-edit-sphere">
+                    <option value="1">1★</option>
+                    <option value="2">2★</option>
+                    <option value="3">3★</option>
+                    <option value="4">4★</option>
+                </select>
+                <span>Prepará el tablero antes de ejecutar.</span>
+            </div>
 
 
 
@@ -579,10 +621,11 @@
         let animandoTablero = false;
 
         let enPausa = false;
-
         let velocidadAnimacion = 300;
-
-        let ultimoEstadoTablero = null;
+        let ultimoEstadoTablero = {
+            ancho: 4, alto: 4, posX: 0, posY: 0, celdasJson: "{}"
+        };
+        let tableroEditable = true;
 
         let activeTab = 'program';
 
@@ -940,7 +983,11 @@
 
             const hl = document.getElementById(`hl-${tab}`);
 
+            const gutter = document.getElementById(`gutter-${tab}`);
+
             hl.innerHTML = highlightSyntax(tx.value);
+
+            gutter.textContent = tx.value.split('\n').map((_, i) => i + 1).join('\n');
 
             localStorage.setItem(`ds_${tab}`, tx.value);
 
@@ -954,9 +1001,13 @@
 
             const hl = document.getElementById(`hl-${tab}`);
 
+            const gutter = document.getElementById(`gutter-${tab}`);
+
             hl.scrollTop = tx.scrollTop;
 
             hl.scrollLeft = tx.scrollLeft;
+
+            gutter.scrollTop = tx.scrollTop;
 
         }
 
@@ -1028,11 +1079,27 @@
 
 
 
-                if ((event.key === 'Tab' || event.key === 'Enter') && state && state.suggestions.length) {
+                if (event.key === 'Enter' && state && state.suggestions.length) {
 
                     event.preventDefault();
 
                     applyAutocompleteSuggestion(tab, state.suggestions[state.index]);
+
+                    return;
+
+                }
+
+                if (event.key === 'Tab') {
+
+                    event.preventDefault();
+
+                    const start = textarea.selectionStart;
+
+                    const end = textarea.selectionEnd;
+
+                    textarea.setRangeText('    ', start, end, 'end');
+
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 
                     return;
 
@@ -1090,7 +1157,7 @@
 
         function initEditors() {
 
-            const defaultProgram = localStorage.getItem("ds_program") || `INICIAR_TABLERO(4, 4)\n\n# Programa principal\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
+            const defaultProgram = localStorage.getItem("ds_program") || `# Programa principal\nMoverYRecoger(ESTE, ESFERA_1)\nMoverYRecoger(NORTE, ESFERA_7)\n\nMOSTRAR_TABLERO()`;
 
             const defaultLibrary = localStorage.getItem("ds_library") || `# Biblioteca de Funciones\nROSHI MoverYRecoger(direccion, esfera) {\n    VOLAR(direccion)\n    CARGAR(esfera)\n}`;
 
@@ -1109,6 +1176,8 @@
             updateEditor('program');
 
             updateEditor('library');
+
+            renderizarFrameTablero(4, 4, 0, 0, "{}");
 
         }
 
@@ -1170,6 +1239,8 @@
 
             ultimoEstadoTablero = { ancho, alto, posX, posY, celdasJson };
 
+            tableroEditable = false;
+
             pasotableroQueue.push(ultimoEstadoTablero);
 
             if (!animandoTablero) procesarColaAnimacion();
@@ -1200,11 +1271,21 @@
 
             document.getElementById("pause-btn").innerText = "⏸ Pausa";
 
-            if (ultimoEstadoTablero) {
+            tableroEditable = true;
 
-                renderizarFrameTablero(ultimoEstadoTablero.ancho, ultimoEstadoTablero.alto, 0, 0, "{}");
+            ultimoEstadoTablero = {
+                ancho: ultimoEstadoTablero.ancho,
+                alto: ultimoEstadoTablero.alto,
+                posX: 0,
+                posY: 0,
+                celdasJson: "{}"
+            };
 
-            }
+            renderizarFrameTablero(
+                ultimoEstadoTablero.ancho, ultimoEstadoTablero.alto,
+                ultimoEstadoTablero.posX, ultimoEstadoTablero.posY,
+                ultimoEstadoTablero.celdasJson
+            );
 
         }
 
@@ -1221,6 +1302,8 @@
             if (pasotableroQueue.length === 0) {
 
                 animandoTablero = false;
+
+                tableroEditable = true;
 
                 return;
 
@@ -1288,7 +1371,8 @@
                         // ESFERA_1 -> slot-1, etc.
                         const num = String(esfera).replace(/\D/g, "") || "1";
                         orb.className = "esfera-orb slot-" + num;
-                        const estrellas = ESTRELLAS_MAP[esfera] || esfera;
+                        const nombreEsfera = `ESFERA_${num}`;
+                        const estrellas = ESTRELLAS_MAP[nombreEsfera] || nombreEsfera;
                         orb.innerText = cantidad > 1 ? (cantidad + "x") : estrellas;
                         orb.title = estrellas + (cantidad > 1 ? (" x" + cantidad) : "");
                         cell.appendChild(orb);
@@ -1310,6 +1394,42 @@
                         goku.draggable = false;
                         cell.appendChild(goku);
                     }
+
+                    cell.addEventListener("click", () => {
+                        if (!tableroEditable) return;
+
+                        const modo = document.getElementById("board-edit-mode").value;
+                        let siguienteX = posX;
+                        let siguienteY = posY;
+
+                        if (modo === "head") {
+                            siguienteX = c;
+                            siguienteY = r;
+                        } else {
+                            const esfera = document.getElementById("board-edit-sphere").value;
+                            const cantidades = celdas[key] || (celdas[key] = {});
+                            const cantidad = Number(cantidades[esfera] || 0);
+
+                            if (modo === "add") {
+                                cantidades[esfera] = cantidad + 1;
+                            } else if (cantidad > 1) {
+                                cantidades[esfera] = cantidad - 1;
+                            } else {
+                                delete cantidades[esfera];
+                            }
+                        }
+
+                        ultimoEstadoTablero = {
+                            ancho, alto,
+                            posX: siguienteX,
+                            posY: siguienteY,
+                            celdasJson: JSON.stringify(celdas)
+                        };
+                        renderizarFrameTablero(
+                            ancho, alto, siguienteX, siguienteY,
+                            ultimoEstadoTablero.celdasJson
+                        );
+                    });
 
                     grid.appendChild(cell);
 
@@ -1377,6 +1497,7 @@
                 await pyodide.runPythonAsync(`
 
 import sys
+import json
 
 sys.path.append('/target')
 
@@ -1385,10 +1506,11 @@ from dragonscript.lexer import Lexer
 from dragonscript.parser import Parser
 
 from dragonscript.interpreter import Interpreter
+from dragonscript.board import Board
 
 
 
-def execute_dragonscript(user_code, lib_code):
+def execute_dragonscript(user_code, lib_code, initial_board_json):
 
     full_code = lib_code + "\\n" + user_code
 
@@ -1396,7 +1518,16 @@ def execute_dragonscript(user_code, lib_code):
 
     ast = Parser(tokens).parse()
 
-    Interpreter().interpret(ast)
+    initial_board = json.loads(initial_board_json)
+    board = Board(initial_board["ancho"], initial_board["alto"])
+    board.x = initial_board["posX"]
+    board.y = initial_board["posY"]
+    for coordinate, spheres in initial_board["celdas"].items():
+        x, y = (int(part.strip()) for part in coordinate.strip("()").split(","))
+        board.celdas[(x, y)].update(
+            {int(sphere): int(quantity) for sphere, quantity in spheres.items()}
+        )
+    Interpreter(board=board, preserve_initial_board=True).interpret(ast)
 
 `);
 
@@ -1443,7 +1574,7 @@ def execute_dragonscript(user_code, lib_code):
             animandoTablero = false;
 
             enPausa = false;
-
+            tableroEditable = false;
             document.getElementById("pause-btn").innerText = "⏸ Pausa";
 
 
@@ -1460,7 +1591,20 @@ def execute_dragonscript(user_code, lib_code):
 
                 pyodide.globals.set("lib_code", libCode);
 
-                await pyodide.runPythonAsync(`execute_dragonscript(user_code, lib_code)`);
+                pyodide.globals.set(
+                    "initial_board_json",
+                    JSON.stringify({
+                        ancho: ultimoEstadoTablero.ancho,
+                        alto: ultimoEstadoTablero.alto,
+                        posX: ultimoEstadoTablero.posX,
+                        posY: ultimoEstadoTablero.posY,
+                        celdas: JSON.parse(ultimoEstadoTablero.celdasJson)
+                    })
+                );
+
+                await pyodide.runPythonAsync(
+                    `execute_dragonscript(user_code, lib_code, initial_board_json)`
+                );
 
             } catch (err) {
 
@@ -1471,6 +1615,10 @@ def execute_dragonscript(user_code, lib_code):
                 btn.disabled = false;
 
                 btn.innerText = "Ejecutar Código ⚡";
+
+                if (!animandoTablero && pasotableroQueue.length === 0) {
+                    tableroEditable = true;
+                }
 
             }
 
@@ -1485,4 +1633,3 @@ def execute_dragonscript(user_code, lib_code):
 </body>
 
 </html>  
-

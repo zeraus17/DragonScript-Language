@@ -15,6 +15,7 @@ import sys
 from typing import Any
 
 from . import ast_nodes as ast
+from .board import Board
 from .environment import Environment
 from .runtime import (Technique, BuiltinFunction, ReturnSignal, ds_repr,
                       is_truthy, register_builtins, VERSION)
@@ -29,6 +30,9 @@ _NO_OVERLOAD = object()
 
 # Límite de profundidad de recursión de técnicas de DragonScript.
 MAX_CALL_DEPTH = 400
+_BOARD_SIDE_EFFECTS = frozenset({
+    "INICIAR_TABLERO", "CARGAR", "DRENAR", "MOSTRAR_TABLERO",
+})
 
 # Cada llamada a técnica consume varias tramas (frames) de Python; elevamos el
 # límite de recursión de Python para que se dispare antes nuestro error
@@ -37,12 +41,21 @@ sys.setrecursionlimit(max(sys.getrecursionlimit(), MAX_CALL_DEPTH * 20))
 
 
 class Interpreter:
-    def __init__(self, output=None):
+    def __init__(self, output=None, board: Board | None = None,
+                 preserve_initial_board: bool = False):
         self.globals = Environment()
         self.environment = self.globals
         self._out = output if output is not None else sys.stdout
         self._call_depth = 0
-        register_builtins(self.globals, self._out)
+        self._pure_technique_depth = 0
+        self.board = board if board is not None else Board()
+        register_builtins(
+            self.globals,
+            self._out,
+            board=self.board,
+            preserve_initial_board=preserve_initial_board,
+            is_pure_technique=lambda: self._pure_technique_depth > 0,
+        )
 
     # ------------------------------------------------------------------ API
     def interpret(self, program: ast.Program) -> None:
@@ -254,7 +267,9 @@ class Interpreter:
             self._execute(stmt)
 
     def _exec_ExpressionStatement(self, node: ast.ExpressionStatement) -> None:
-        self._evaluate(node.expression)
+        value = self._evaluate(node.expression)
+        if isinstance(node.expression, ast.TechniqueCall) and value is not None:
+            self._emit(self._stringify(value))
 
     # ------------------------------------------------------------ evaluación
     def _evaluate(self, node: ast.Node) -> Any:
@@ -507,6 +522,11 @@ class Interpreter:
         args = [self._evaluate(a) for a in node.arguments]
 
         if isinstance(callee, BuiltinFunction):
+            if (self._pure_technique_depth
+                    and callee.name in _BOARD_SIDE_EFFECTS):
+                raise RuntimeError_(
+                    f"La función '{callee.name}' no puede realizar acciones "
+                    "sobre el tablero. Usa ROSHI para modificarlo.", node.line)
             return callee.call(args)
 
         if isinstance(callee, BoundMethod):
@@ -552,6 +572,10 @@ class Interpreter:
 
         previous = self.environment
         self.environment = env
+        pure_technique = not technique.declaration.is_procedure
+        previous_board_position = (self.board.x, self.board.y)
+        if pure_technique:
+            self._pure_technique_depth += 1
         try:
             for stmt in technique.declaration.body.statements:
                 self._execute(stmt)
@@ -560,6 +584,9 @@ class Interpreter:
             return ret.value
         finally:
             self.environment = previous
+            if pure_technique:
+                self.board.x, self.board.y = previous_board_position
+                self._pure_technique_depth -= 1
             self._call_depth -= 1
 
 

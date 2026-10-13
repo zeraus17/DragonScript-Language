@@ -14,11 +14,16 @@ Cubre:
 import os
 import sys
 import unittest
+from io import StringIO
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from dragonscript import run_source_capture
+from dragonscript.board import Board
 from dragonscript.errors import TypeErrorDS, RuntimeError_
+from dragonscript.interpreter import Interpreter
+from dragonscript.lexer import tokenize
+from dragonscript.parser import parse
 
 
 class TestKeywordsEspanol(unittest.TestCase):
@@ -278,6 +283,95 @@ class TestTablero(unittest.TestCase):
     def run_code(self, code):
         return run_source_capture(code)
 
+    def test_interpreter_uses_preconfigured_board(self):
+        board = Board(2, 2)
+        board.cargar(3)
+        board.volar("ESTE")
+        output = StringIO()
+
+        Interpreter(output=output, board=board).interpret(
+            parse(tokenize(
+                "SCOUTER POSICION_X()\n"
+                "VOLAR(NORTE)\n"
+                "SCOUTER POSICION_Y()"
+            ))
+        )
+
+        self.assertEqual(output.getvalue(), "1\n1\n")
+
+    def test_function_can_return_preconfigured_board_state(self):
+        board = Board(2, 2)
+        board.cargar(3)
+        output = StringIO()
+        program = parse(tokenize(
+            "TECNICA consultar() {\n"
+            "  TRANSMITIR CANTIDAD_ESFERAS(ESFERA_3)\n"
+            "}\n"
+            "SCOUTER consultar()\n"
+            "SCOUTER HAY_ESFERA(ESFERA_3)"
+        ))
+
+        Interpreter(output=output, board=board).interpret(program)
+
+        self.assertEqual(output.getvalue(), "1\nTRUE\n")
+        self.assertEqual(board.cuantas(3), 1)
+
+    def test_web_style_initialization_preserves_preconfigured_board(self):
+        board = Board(2, 2)
+        board.cargar(1)
+        output = StringIO()
+        program = parse(tokenize(
+            "INICIAR_TABLERO(2, 2)\n"
+            "TECNICA consultar() {\n"
+            "  TRANSMITIR CUANTAS(ESFERA_1)\n"
+            "}\n"
+            "SCOUTER consultar()"
+        ))
+
+        Interpreter(
+            output=output,
+            board=board,
+            preserve_initial_board=True,
+        ).interpret(program)
+
+        self.assertEqual(output.getvalue(), "1\n")
+        self.assertEqual(board.cuantas(1), 1)
+
+    def test_web_style_initialization_preserves_board_when_resizing(self):
+        board = Board(4, 4)
+        board.cargar(1)
+        board.volar("ESTE")
+        board.cargar(1)
+        board.volar("NORTE")
+        board.cargar(2)
+        output = StringIO()
+        program = parse(tokenize(
+            "INICIAR_TABLERO(4, 1)\n"
+            "TECNICA contarFila() {\n"
+            "  KI total = 0\n"
+            "  WHILE PUEDE_VOLAR(OESTE) { VOLAR(OESTE) }\n"
+            "  WHILE TRUE {\n"
+            "    total = total + CANTIDAD_ESFERAS(ESFERA_1)\n"
+            "    IF NOT PUEDE_VOLAR(ESTE) { TRANSMITIR total }\n"
+            "    VOLAR(ESTE)\n"
+            "  }\n"
+            "}\n"
+            "SCOUTER contarFila()\n"
+            "SCOUTER POSICION_X()"
+        ))
+
+        Interpreter(
+            output=output,
+            board=board,
+            preserve_initial_board=True,
+        ).interpret(program)
+
+        self.assertEqual(output.getvalue(), "2\n1\n")
+        self.assertEqual(board.cuantas(1), 1)
+        self.assertEqual(board.celdas[(1, 0)][1], 1)
+        self.assertEqual(board.cuantas(2), 0)
+        self.assertEqual((board.x, board.y), (0, 0))
+
     def test_posicion_inicial(self):
         code = """
 INICIAR_TABLERO(3, 3)
@@ -369,7 +463,7 @@ SCOUTER STR(CUANTAS(ESFERA_1))
         # Recorre todas las celdas y suma; 2x2 = 4 esferas.
         code = """
 INICIAR_TABLERO(2, 2)
-TECNICA sembrar() { CARGAR(ESFERA_1) }
+ROSHI sembrar() { CARGAR(ESFERA_1) }
 sembrar()
 VOLAR(ESTE)
 sembrar()

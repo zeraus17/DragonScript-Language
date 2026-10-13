@@ -116,7 +116,10 @@ def is_truthy(value: Any) -> bool:
     return True
 
 
-def register_builtins(global_env, output=None) -> None:
+def register_builtins(global_env, output=None,
+                      board: board_mod.Board | None = None,
+                      preserve_initial_board: bool = False,
+                      is_pure_technique: Callable[[], bool] | None = None) -> None:
     """Registra las funciones built-in en el ámbito global dado.
 
     ``output`` es el flujo de salida (el mismo que usa SCOUTER) para que
@@ -184,11 +187,8 @@ def register_builtins(global_env, output=None) -> None:
 
     # --------------------------------------------------------------
     # TABLERO estilo Gobstones (temática Dragon Ball)
-    tablero = board_mod.Board()
-
-    # --------------------------------------------------------------
-    # TABLERO estilo Gobstones (temática Dragon Ball)
-    tablero = board_mod.Board()
+    tablero = board if board is not None else board_mod.Board()
+    preserve_first_init = [preserve_initial_board]
 
     def _actualizar_gui():
         # 1. Escritorio (Tkinter)
@@ -210,6 +210,27 @@ def register_builtins(global_env, output=None) -> None:
                 pass
 
     def _iniciar(ancho, alto):
+        if preserve_first_init[0]:
+            preserve_first_init[0] = False
+            celdas_previas = {
+                coordenada: dict(esferas)
+                for coordenada, esferas in tablero.celdas.items()
+            }
+            x_previo, y_previo = tablero.x, tablero.y
+            tablero.reiniciar(ancho, alto)
+            for (x, y), esferas in celdas_previas.items():
+                if x < tablero.ancho and y < tablero.alto:
+                    tablero.celdas[(x, y)].update(esferas)
+            if x_previo < tablero.ancho and y_previo < tablero.alto:
+                tablero.x, tablero.y = x_previo, y_previo
+            if HAS_TKINTER and TableroGUI is not None and (
+                    gui_instance[0] is None
+                    or gui_instance[0].ancho != ancho
+                    or gui_instance[0].alto != alto):
+                gui_instance[0] = TableroGUI(ancho, alto)
+            _actualizar_gui()
+            return None
+        preserve_first_init[0] = False
         tablero.reiniciar(ancho, alto)
         if HAS_TKINTER and TableroGUI is not None:
             gui_instance[0] = TableroGUI(ancho, alto)
@@ -218,34 +239,8 @@ def register_builtins(global_env, output=None) -> None:
 
     def _volar(direccion):
         tablero.volar(direccion)
-        _actualizar_gui()
-        return None
-
-    def _cargar(esfera):
-        tablero.cargar(esfera)
-        _actualizar_gui()
-        return None
-
-    def _drenar(esfera):
-        tablero.drenar(esfera)
-        _actualizar_gui()
-        return None
-
-    def _mostrar_tablero():
-        out.write(tablero.render() + "\n")
-        _actualizar_gui()
-        return None
-
-    def _iniciar(ancho, alto):
-        tablero.reiniciar(ancho, alto)
-        if HAS_TKINTER and TableroGUI is not None:
-            gui_instance[0] = TableroGUI(ancho, alto)
-        _actualizar_gui()
-        return None
-
-    def _volar(direccion):
-        tablero.volar(direccion)
-        _actualizar_gui()
+        if is_pure_technique is None or not is_pure_technique():
+            _actualizar_gui()
         return None
 
     def _cargar(esfera):
@@ -271,6 +266,10 @@ def register_builtins(global_env, output=None) -> None:
         "DRENAR": BuiltinFunction("DRENAR", _drenar, 1),
         "HAY": BuiltinFunction("HAY", tablero.hay, 1),
         "CUANTAS": BuiltinFunction("CUANTAS", tablero.cuantas, 1),
+        "HAY_ESFERA": BuiltinFunction("HAY_ESFERA", tablero.hay, 1),
+        "CANTIDAD_ESFERAS": BuiltinFunction(
+            "CANTIDAD_ESFERAS", tablero.cuantas, 1
+        ),
         "POSICION_X": BuiltinFunction("POSICION_X", lambda: tablero.x, 0),
         "POSICION_Y": BuiltinFunction("POSICION_Y", lambda: tablero.y, 0),
         "MOSTRAR_TABLERO": BuiltinFunction("MOSTRAR_TABLERO", _mostrar_tablero, 0),
